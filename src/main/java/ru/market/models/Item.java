@@ -50,4 +50,31 @@ public class Item {
   protected Item() {
   }
 
+  public Integer getId() {
+    return id;
+  }
+
+  public String getTitle() {
+    return title;
+  }
+
+  public Long getPrice() {
+    return price;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public List<Image> getImages() {
+    return images;
+  }
+
+  public String getCreatedAt() {
+    return createdAt;
+  }
+
+  public String getUpdatedAt() {
+    return updatedAt;
+  }
 }
