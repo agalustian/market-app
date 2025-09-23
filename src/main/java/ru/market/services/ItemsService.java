@@ -12,7 +12,7 @@ public class ItemsService {
     this.itemsRepository = itemsRepository;
   }
 
-  Item getItemById(final Integer itemId) {
+  public Item getItemById(final Integer itemId) {
     return itemsRepository.getItemById(itemId);
   }
 
