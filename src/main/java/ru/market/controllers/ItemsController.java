@@ -1,6 +1,7 @@
 package ru.market.controllers;
 
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +19,8 @@ import ru.market.services.ItemsService;
 @Controller
 @RequestMapping("/items")
 public class ItemsController {
+  // TODO move to environment variables
+  private Integer ITEMS_CHUNK_SIZE = 3;
 
   private static final String ITEMS_VIEW = "items";
 
@@ -45,7 +48,7 @@ public class ItemsController {
     Integer itemsTotalCount = itemsService.searchCount(search);
 
     model.addAttribute("items",
-        ItemsDTO.from(items, search, sortValue, new Paging(pageNumber, pageSize, itemsTotalCount)));
+        ItemsDTO.from(items, ITEMS_CHUNK_SIZE, search, sortValue, new Paging(pageNumber, pageSize, itemsTotalCount)));
 
     return ITEMS_VIEW;
   }
