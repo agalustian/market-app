@@ -5,6 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import ru.market.dto.ItemDTO;
 import ru.market.models.Item;
 import ru.market.services.ItemsService;
 
@@ -22,7 +23,7 @@ public class ItemsController {
   String getItemById(@PathVariable("itemId") Integer itemId, final Model model) {
     Item item = itemsService.getItemById(itemId);
 
-    model.addAttribute("item", item);
+    model.addAttribute("item", ItemDTO.from(item, 10, "test-path"));
 
     return "item";
   }
