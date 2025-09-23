@@ -23,6 +23,10 @@ public class ItemsController {
   String getItemById(@PathVariable("itemId") Integer itemId, final Model model) {
     Item item = itemsService.getItemById(itemId);
 
+    if (item == null) {
+      return "items";
+    }
+
     model.addAttribute("item", ItemDTO.from(item, 10, "test-path"));
 
     return "item";
