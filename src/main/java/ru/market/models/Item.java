@@ -18,7 +18,7 @@ public class Item {
   private String title;
 
   @Column(name = "price", nullable = false, updatable = true)
-  private Double userId;
+  private Long price;
 
   @Column(name = "description", nullable = false)
   private String description;
@@ -31,10 +31,10 @@ public class Item {
   @LastModifiedDate
   private String updatedAt;
 
-  public Item(Integer id, String title, Double userId, String description) {
+  public Item(Integer id, String title, Long price, String description) {
     this.id = id;
     this.title = title;
-    this.userId = userId;
+    this.price = price;
     this.description = description;
   }
 
