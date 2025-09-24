@@ -1,6 +1,5 @@
 package ru.market.controllers;
 
-import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,8 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.market.dto.CartAction;
-import ru.market.dto.CartItemsDTO;
 import ru.market.dto.ItemDTO;
+import ru.market.models.Cart;
 import ru.market.models.Order;
 import ru.market.services.CartsService;
 
@@ -26,11 +25,11 @@ public class CartsController {
     this.cartsService = cartsService;
   }
 
-  @GetMapping
+  @GetMapping("/items")
   public String getCartItems(final Model model) {
-    model.addAttribute("items", getCartItemsDTO(CART_ID));
+    Cart cart = cartsService.getCart(CART_ID);
 
-    return "cart";
+    return getCartItemsView(model, cart);
   }
 
   @PostMapping("/buy")
@@ -47,23 +46,16 @@ public class CartsController {
   @PostMapping("/items")
   public String addRemoveToCart(@RequestParam("id") Integer id, @RequestParam("action") CartAction action,
                                 Model model) {
-    cartsService.addRemoveToCart(CART_ID, id, action);
+    Cart cart = cartsService.addRemoveToCart(CART_ID, id, action);
 
-    model.addAttribute("items", getCartItemsDTO(CART_ID));
-
-    return "cart";
+    return getCartItemsView(model, cart);
   }
 
-  private CartItemsDTO getCartItemsDTO(final Integer cartId) {
-    var cart = cartsService.getCart(cartId);
-    List<ItemDTO> cartItems = cart.getCartItems().stream()
-        .map(cartItem -> ItemDTO.from(cartItem.getItem(), cartItem.getCount(), "img"))
-        .toList();
+  private String getCartItemsView(final Model model, Cart cart) {
+    model.addAttribute("items", cart.getCartItems().stream().map(ItemDTO::from).toList());
+    model.addAttribute("total", cart.getTotalSum());
 
-    Integer totalPrice =
-        cartItems.stream().map(cartItem -> cartItem.price() * cartItem.count()).reduce(Integer::sum).get();
-
-    return new CartItemsDTO(cartItems, totalPrice);
+    return "cart";
   }
 
 }

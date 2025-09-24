@@ -2,6 +2,7 @@ package ru.market.models;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -17,7 +18,7 @@ public class Cart {
   @Id
   private Integer id;
 
-  @OneToMany(cascade = {CascadeType.REMOVE})
+  @OneToMany(cascade = {CascadeType.REMOVE}, fetch = FetchType.LAZY)
   @JoinColumn(name = "cart_id")
   private List<CartItem> cartItems = new ArrayList<>();
 
@@ -27,6 +28,13 @@ public class Cart {
 
   public List<CartItem> getCartItems() {
     return cartItems;
+  }
+
+  public Integer getTotalSum() {
+    return cartItems.stream()
+        .map(item -> item.getItem().getPrice() * item.getCount())
+        .reduce(Integer::sum)
+        .get();
   }
 
 }

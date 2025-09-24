@@ -28,7 +28,7 @@ public class CartsService {
     return cartsRepository.getCartById(cartId);
   }
 
-  public boolean addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
+  public Cart addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
     return switch (cartAction) {
       case PLUS -> cartItemsRepository.incrementCount(cartId, itemId);
       case MINUS -> cartItemsRepository.decrementCount(cartId, itemId);

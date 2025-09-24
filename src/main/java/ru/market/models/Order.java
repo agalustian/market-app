@@ -42,13 +42,7 @@ public class Order {
     List<OrderItem> orderItems = cart.getCartItems().stream().map(
         cartItem -> OrderItem.from(cartItem, cartItem.getCount())).toList();
 
-    Integer totalSum =
-        orderItems.stream()
-            .map(orderItem -> orderItem.getPrice() * orderItem.getCount())
-            .reduce(Integer::sum)
-            .get();
-
-    return new Order(null, orderItems, totalSum, null);
+    return new Order(null, orderItems, cart.getTotalSum(), null);
   }
 
   public Integer getId() {
