@@ -23,7 +23,7 @@ public class Item {
   @Column(name = "description", nullable = false)
   private String description;
 
-  @Column(name = "img_path", nullable = false)
+  @Column(name = "img_path", nullable = true)
   private String imgPath;
 
   @Column(name = "created_at", updatable = false)
@@ -75,12 +75,16 @@ public class Item {
     return updatedAt;
   }
 
+  public Integer getCount() {
+    return this.count;
+  }
+
   public void setCount(final Integer count) {
     this.count = count == null ? 0 : count;
   }
 
-  public Integer getCount() {
-    return this.count;
+  public void setImgPath(final String imgPath) {
+    this.imgPath = imgPath;
   }
 
 }

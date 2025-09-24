@@ -4,8 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Table(name = "images")
@@ -14,18 +12,22 @@ public class Image {
   @Id
   private Integer id;
 
-  @Column(name = "item_id", nullable = false, updatable = false)
-  private String itemId;
+  @Column(name = "content")
+  private byte[] content;
 
-  @Column(name = "img_path", nullable = false, updatable = true)
-  private String imgPath;
+  public Image(Integer id, byte[] content) {
+    this.id = id;
+    this.content = content;
+  }
 
-  @Column(name = "created_at", updatable = false)
-  @CreatedDate
-  private String createdAt;
+  protected Image() {}
 
-  @Column(name = "updated_at", updatable = true)
-  @LastModifiedDate
-  private String updatedAt;
+  public Integer getId() {
+    return id;
+  }
+
+  public byte[] getContent() {
+    return content;
+  }
 
 }

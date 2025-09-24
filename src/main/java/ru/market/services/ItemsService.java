@@ -4,22 +4,31 @@ import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import ru.market.dto.ItemsSort;
+import ru.market.exceptions.NotFoundException;
+import ru.market.models.Image;
 import ru.market.models.Item;
 import ru.market.repositories.CartItemsJpaRepository;
+import ru.market.repositories.ImagesJpaRepository;
 import ru.market.repositories.ItemsJpaRepository;
 
 @Service
 public class ItemsService {
-  private static Integer CART_ID = 3;
+  private static final Integer CART_ID = 3;
 
   private final ItemsJpaRepository itemsRepository;
 
   private final CartItemsJpaRepository cartItemsRepository;
 
-  public ItemsService(ItemsJpaRepository itemsRepository, CartItemsJpaRepository cartItemsRepository) {
+  private final ImagesJpaRepository imagesRepository;
+
+  public ItemsService(ItemsJpaRepository itemsRepository, CartItemsJpaRepository cartItemsRepository,
+                      ImagesJpaRepository imagesRepository) {
     this.itemsRepository = itemsRepository;
     this.cartItemsRepository = cartItemsRepository;
+    this.imagesRepository = imagesRepository;
   }
 
   public Item getItemById(final Integer itemId) {
@@ -42,7 +51,7 @@ public class ItemsService {
 
     var cartItemsCount = cartItemsRepository.countCartItems(CART_ID, items.stream().map(Item::getId).toList());
 
-    for (Item item: items) {
+    for (Item item : items) {
       item.setCount(cartItemsCount.get(item.getId()));
     }
 
@@ -51,6 +60,28 @@ public class ItemsService {
 
   public Integer searchCount(final String search) {
     return itemsRepository.countItemsByTitleContainingOrDescriptionContaining(search, search);
+  }
+
+  @Transactional
+  public void saveItemImage(final Integer itemId, byte[] image) {
+    Assert.notNull(itemId, "Item id is required for getting image");
+    Item item = itemsRepository.getItemById(itemId);
+
+    if (item == null) {
+      throw new NotFoundException("Item with such id not exists");
+    }
+
+    imagesRepository.save(new Image(itemId, image)).getContent();
+
+    item.setImgPath("/image"+itemId);
+
+    itemsRepository.save(item);
+  }
+
+  public byte[] getItemImage(final Integer itemId) {
+    Assert.notNull(itemId, "Item id is required for getting image");
+
+    return imagesRepository.getImageById(itemId).getContent();
   }
 
   private String getSortField(ItemsSort sort) {

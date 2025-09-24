@@ -1,5 +1,6 @@
 package ru.market.controllers;
 
+import java.io.IOException;
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import ru.market.dto.CartAction;
 import ru.market.dto.ItemDTO;
 import ru.market.dto.ItemsDTO;
@@ -95,9 +97,19 @@ public class ItemsController {
       return ITEMS_VIEW;
     }
 
-    model.addAttribute("item", ItemDTO.from(item, 10, "test-path"));
+    model.addAttribute("item", ItemDTO.from(item));
 
     return "item";
+  }
+
+  @PostMapping("/image/{itemId}")
+  public void saveItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {
+    itemsService.saveItemImage(itemId, image.getBytes());
+  }
+
+  @PostMapping("/image/{itemId}")
+  public void getItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {
+    itemsService.saveItemImage(itemId, image.getBytes());
   }
 
 }
