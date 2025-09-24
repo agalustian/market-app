@@ -41,22 +41,22 @@ public class ItemsController {
   @GetMapping("/")
   String search(
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
-      @RequestParam(value = "sort", required = false) ItemsSort sort,
-      @RequestParam(value = "pageNumber", required = false) Integer pageNumber,
-      @RequestParam(value = "pageSize", required = false) Integer pageSize,
+      @RequestParam(value = "sort", required = false, defaultValue = "NO") ItemsSort sort,
+      @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+      @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize,
       final Model model
   ) {
     if (search.isEmpty()) {
       return ITEMS_VIEW;
     }
 
-    ItemsSort sortValue = sort != null ? sort : ItemsSort.NO;
-
-    List<Item> items = itemsService.search(search, sortValue, PageRequest.of(pageNumber, pageSize));
+    List<Item> items = itemsService.search(search, sort, PageRequest.of(pageNumber, pageSize));
     Integer itemsTotalCount = itemsService.searchCount(search);
 
-    model.addAttribute("items",
-        ItemsDTO.from(items, ITEMS_CHUNK_SIZE, search, sortValue, new Paging(pageNumber, pageSize, itemsTotalCount)));
+    model.addAttribute("items", ItemsDTO.from(items, ITEMS_CHUNK_SIZE));
+    model.addAttribute("search", search);
+    model.addAttribute("sort", sort);
+    model.addAttribute("paging", new Paging(pageNumber, pageSize, itemsTotalCount));
 
     return ITEMS_VIEW;
   }
@@ -74,6 +74,17 @@ public class ItemsController {
 
     return String.format("redirect:/items?search=%s&sort=%s&pageNumber=%s&pageSize=%s", search, sort, pageNumber,
         pageSize);
+  }
+
+  @PostMapping("/{itemId}")
+  String addRemoveToCart(@PathVariable Integer itemId, @RequestParam CartAction action, Model model) {
+    cartsService.addRemoveToCart(CART_ID, itemId, action);
+
+    Item item = itemsService.getItemById(itemId);
+
+    model.addAttribute("item", item);
+
+    return "item";
   }
 
   @GetMapping("/{itemId}")

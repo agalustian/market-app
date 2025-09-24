@@ -2,13 +2,8 @@ package ru.market.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
@@ -28,9 +23,8 @@ public class Item {
   @Column(name = "description", nullable = false)
   private String description;
 
-  @OneToMany(fetch = FetchType.LAZY)
-  @JoinColumn(name = "item_id")
-  private List<Image> images = new ArrayList<>();
+  @Column(name = "img_path", nullable = false)
+  private String imgPath;
 
   @Column(name = "created_at", updatable = false)
   @CreatedDate
@@ -40,11 +34,12 @@ public class Item {
   @LastModifiedDate
   private String updatedAt;
 
-  public Item(Integer id, String title, Integer price, String description) {
+  public Item(Integer id, String title, Integer price, String description, String imgPath) {
     this.id = id;
     this.title = title;
     this.price = price;
     this.description = description;
+    this.imgPath = imgPath;
   }
 
   protected Item() {
@@ -66,8 +61,8 @@ public class Item {
     return description;
   }
 
-  public List<Image> getImages() {
-    return images;
+  public String getImgPath() {
+    return imgPath;
   }
 
   public String getCreatedAt() {

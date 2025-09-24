@@ -29,11 +29,13 @@ public class CartsService {
   }
 
   public Cart addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
-    return switch (cartAction) {
+    switch (cartAction) {
       case PLUS -> cartItemsRepository.incrementCount(cartId, itemId);
       case MINUS -> cartItemsRepository.decrementCount(cartId, itemId);
       case DELETE -> cartItemsRepository.deleteCartItemByCartIdAndItem_Id(cartId, itemId);
-    };
+    }
+
+    return cartsRepository.getCartById(cartId);
   }
 
   @Transactional

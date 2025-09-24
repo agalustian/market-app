@@ -27,9 +27,7 @@ public class CartsController {
 
   @GetMapping("/items")
   public String getCartItems(final Model model) {
-    Cart cart = cartsService.getCart(CART_ID);
-
-    return getCartItemsView(model, cart);
+    return getCartItemsView(model, CART_ID);
   }
 
   @PostMapping("/buy")
@@ -46,12 +44,14 @@ public class CartsController {
   @PostMapping("/items")
   public String addRemoveToCart(@RequestParam("id") Integer id, @RequestParam("action") CartAction action,
                                 Model model) {
-    Cart cart = cartsService.addRemoveToCart(CART_ID, id, action);
+    cartsService.addRemoveToCart(CART_ID, id, action);
 
-    return getCartItemsView(model, cart);
+    return getCartItemsView(model, CART_ID);
   }
 
-  private String getCartItemsView(final Model model, Cart cart) {
+  private String getCartItemsView(final Model model, final Integer cartId) {
+    Cart cart = cartsService.getCart(cartId);
+
     model.addAttribute("items", cart.getCartItems().stream().map(ItemDTO::from).toList());
     model.addAttribute("total", cart.getTotalSum());
 

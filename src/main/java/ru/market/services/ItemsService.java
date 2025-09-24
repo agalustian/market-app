@@ -31,10 +31,6 @@ public class ItemsService {
     return itemsRepository.countItemsByTitleContainingOrDescriptionContaining(search, search);
   }
 
-  private String prepareSearchValue(final String search) {
-    return search.toLowerCase();
-  }
-
   private String getSortField(ItemsSort sort) {
     return switch (sort) {
       case NO -> "id";
