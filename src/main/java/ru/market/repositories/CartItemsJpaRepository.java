@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import ru.market.models.CartItem;
 
 @Repository
-public interface CartItemsJpaRepository extends JpaRepository<CartItem, Integer> {
+public interface CartItemsJpaRepository extends CartItemsRepositoryCustom, JpaRepository<CartItem, Integer> {
 
   void deleteCartItemByCartIdAndItem_Id(Integer cartId, Integer itemId);
 

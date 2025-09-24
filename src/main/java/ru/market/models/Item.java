@@ -34,6 +34,8 @@ public class Item {
   @LastModifiedDate
   private String updatedAt;
 
+  private Integer count;
+
   public Item(Integer id, String title, Integer price, String description, String imgPath) {
     this.id = id;
     this.title = title;
@@ -72,4 +74,13 @@ public class Item {
   public String getUpdatedAt() {
     return updatedAt;
   }
+
+  public void setCount(final Integer count) {
+    this.count = count == null ? 0 : count;
+  }
+
+  public Integer getCount() {
+    return this.count;
+  }
+
 }
