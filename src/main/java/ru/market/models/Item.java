@@ -23,7 +23,7 @@ public class Item {
   private String title;
 
   @Column(name = "price", nullable = false, updatable = true)
-  private Long price;
+  private Integer price;
 
   @Column(name = "description", nullable = false)
   private String description;
@@ -40,7 +40,7 @@ public class Item {
   @LastModifiedDate
   private String updatedAt;
 
-  public Item(Integer id, String title, Long price, String description) {
+  public Item(Integer id, String title, Integer price, String description) {
     this.id = id;
     this.title = title;
     this.price = price;
@@ -58,7 +58,7 @@ public class Item {
     return title;
   }
 
-  public Long getPrice() {
+  public Integer getPrice() {
     return price;
   }
 
