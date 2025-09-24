@@ -28,5 +28,20 @@ public class Order {
   @CreatedDate
   private String createdAt;
 
+  public Integer getId() {
+    return id;
+  }
+
+  public List<OrderItem> getOrderItems() {
+    return orderItems;
+  }
+
+  public Integer getTotalSum() {
+    return totalSum;
+  }
+
+  public String getCreatedAt() {
+    return createdAt;
+  }
 }
 
