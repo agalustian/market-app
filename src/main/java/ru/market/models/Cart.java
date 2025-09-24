@@ -18,9 +18,17 @@ public class Cart {
   @Id
   private Integer id;
 
-  @OneToMany(cascade = {CascadeType.REMOVE}, fetch = FetchType.LAZY)
+  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
   @JoinColumn(name = "cart_id")
   private List<CartItem> cartItems = new ArrayList<>();
+
+  public Cart(Integer id, List<CartItem> cartItems) {
+    this.id = id;
+    this.cartItems = cartItems;
+  }
+
+  protected Cart() {
+  }
 
   public Integer getId() {
     return id;

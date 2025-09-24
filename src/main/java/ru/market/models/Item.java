@@ -4,8 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "items")
@@ -26,14 +25,7 @@ public class Item {
   @Column(name = "img_path", nullable = true)
   private String imgPath;
 
-  @Column(name = "created_at", updatable = false)
-  @CreatedDate
-  private String createdAt;
-
-  @Column(name = "updated_at", updatable = true)
-  @LastModifiedDate
-  private String updatedAt;
-
+  @Transient
   private Integer count;
 
   public Item(Integer id, String title, Integer price, String description, String imgPath) {
@@ -65,14 +57,6 @@ public class Item {
 
   public String getImgPath() {
     return imgPath;
-  }
-
-  public String getCreatedAt() {
-    return createdAt;
-  }
-
-  public String getUpdatedAt() {
-    return updatedAt;
   }
 
   public Integer getCount() {

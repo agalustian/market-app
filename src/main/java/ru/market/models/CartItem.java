@@ -6,8 +6,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
 @Table(name = "cart_items")
@@ -26,13 +24,15 @@ public class CartItem {
   @Column(name = "count", nullable = false, updatable = true)
   private Integer count;
 
-  @Column(name = "created_at", updatable = false)
-  @CreatedDate
-  private String createdAt;
+  protected CartItem() {
+  }
 
-  @Column(name = "updated_at", updatable = true)
-  @LastModifiedDate
-  private String updatedAt;
+  public CartItem(Integer id, Integer cartId, Item item, Integer count) {
+    this.id = id;
+    this.cartId = cartId;
+    this.item = item;
+    this.count = count;
+  }
 
   public Integer getId() {
     return id;
@@ -50,12 +50,14 @@ public class CartItem {
     return count;
   }
 
-  public String getCreatedAt() {
-    return createdAt;
+  public void incrementCount() {
+    this.count = count + 1;
   }
 
-  public String getUpdatedAt() {
-    return updatedAt;
+  public void decrementCount() {
+    if (count > 0) {
+      this.count = count - 1;
+    }
   }
 
 }

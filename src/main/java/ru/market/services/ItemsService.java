@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import ru.market.dto.ItemsSort;
-import ru.market.models.Image;
-import ru.market.models.Item;
 import ru.market.repositories.CartItemsJpaRepository;
 import ru.market.repositories.ImagesJpaRepository;
 import ru.market.repositories.ItemsJpaRepository;
+import ru.market.models.Image;
+import ru.market.models.Item;
 
 @Service
 public class ItemsService {
@@ -43,7 +43,7 @@ public class ItemsService {
     var searchValue = search.toLowerCase();
 
     List<Item> items = itemsRepository.searchItemsByTitleContainingOrDescriptionContaining(searchValue, searchValue,
-        Sort.by(getSortField(sort)).ascending(), pageRequest);
+        pageRequest.withSort(Sort.by(getSortField(sort)).ascending()));
 
     if (items.isEmpty()) {
       return items;

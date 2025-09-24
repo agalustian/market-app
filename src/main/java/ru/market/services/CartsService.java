@@ -1,25 +1,22 @@
 package ru.market.services;
 
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.market.dto.CartAction;
-import ru.market.models.Cart;
-import ru.market.models.Order;
-import ru.market.repositories.CartItemsJpaRepository;
 import ru.market.repositories.CartsJpaRepository;
 import ru.market.repositories.OrdersJpaRepository;
+import ru.market.models.Cart;
+import ru.market.models.Order;
 
 @Service
 public class CartsService {
 
   private final CartsJpaRepository cartsRepository;
-  private final CartItemsJpaRepository cartItemsRepository;
   private final OrdersJpaRepository orderRepository;
 
-  public CartsService(CartsJpaRepository cartsRepository, CartItemsJpaRepository cartItemsRepository,
-                      OrdersJpaRepository orderRepository) {
+  public CartsService(CartsJpaRepository cartsRepository, OrdersJpaRepository orderRepository) {
     this.cartsRepository = cartsRepository;
-    this.cartItemsRepository = cartItemsRepository;
     this.orderRepository = orderRepository;
   }
 
@@ -28,14 +25,23 @@ public class CartsService {
     return cartsRepository.getCartById(cartId);
   }
 
+  @Transactional
   public Cart addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
-    switch (cartAction) {
-      case PLUS -> cartItemsRepository.incrementCount(cartId, itemId);
-      case MINUS -> cartItemsRepository.decrementCount(cartId, itemId);
-      case DELETE -> cartItemsRepository.deleteCartItemByCartIdAndItem_Id(cartId, itemId);
+    Cart cart = cartsRepository.getCartById(cartId);
+
+    var cartItem = cart.getCartItems().stream().filter(item -> Objects.equals(item.getItem().getId(), itemId)).toList().getFirst();
+
+    if (cartItem == null) {
+      return null;
     }
 
-    return cartsRepository.getCartById(cartId);
+    switch (cartAction) {
+      case PLUS -> cartItem.incrementCount();
+      case MINUS -> cartItem.decrementCount();
+      case DELETE -> cart.getCartItems().remove(cartItem);
+    }
+
+    return cart;
   }
 
   @Transactional

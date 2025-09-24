@@ -1,1 +1,0 @@
-create index if not exists items_description_lower_idx ON items (lower(description));

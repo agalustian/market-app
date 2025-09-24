@@ -1,13 +1,24 @@
 package ru.market.models;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "order_items")
 public class OrderItem {
 
+  @Id
   private final Integer id;
 
+  @Column(name = "title")
   private final String title;
 
+  @Column(name = "price")
   private final Integer price;
 
+  @Column(name = "count")
   private final Integer count;
 
   private OrderItem(Integer id, String title, Integer price, Integer count) {
@@ -36,4 +47,5 @@ public class OrderItem {
   public Integer getCount() {
     return count;
   }
+
 }

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: MarketApp
+  main:
+    banner-mode: off
+  datasource:
+    url: jdbc:h2:mem:marketdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE DOMAIN IF NOT EXISTS JSONB AS JSON
+    username: sa
+    driver-class-name: org.h2.Driver
+  liquibase:
+    change-log: "classpath:/db/changelog/db.changelog-master.yaml"
