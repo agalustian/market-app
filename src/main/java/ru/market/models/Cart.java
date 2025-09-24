@@ -28,8 +28,4 @@ public class Cart {
     return cartItems;
   }
 
-  public String getCreatedAt() {
-    return createdAt;
-  }
-
 }

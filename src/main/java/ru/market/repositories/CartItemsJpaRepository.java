@@ -1,0 +1,27 @@
+package ru.market.repositories;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import ru.market.models.CartItem;
+
+public interface CartItemsJpaRepository extends JpaRepository<CartItem, Integer> {
+
+  void deleteByCartId(Integer cartId);
+
+  boolean deleteCartItemByCartIdAndItem_Id(Integer cartId, Integer itemId);
+
+  @Query("""
+      update CartItem
+      set count = count + 1
+      where cartId = :cartId and Item.id = :itemId
+      """)
+  boolean incrementCount(Integer cartId, Integer itemId);
+
+  @Query("""
+      update CartItem
+      set count = count - 1
+      where cartId = :cartId and Item.id = :itemId and count > 0
+      """)
+  boolean decrementCount(Integer cartId, Integer itemId);
+
+}

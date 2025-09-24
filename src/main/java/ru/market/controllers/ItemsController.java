@@ -1,33 +1,41 @@
 package ru.market.controllers;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import ru.market.dto.CartAction;
 import ru.market.dto.ItemDTO;
 import ru.market.dto.ItemsDTO;
 import ru.market.dto.ItemsSort;
 import ru.market.dto.Paging;
 import ru.market.models.Item;
+import ru.market.services.CartsService;
 import ru.market.services.ItemsService;
 
 @Controller
 @RequestMapping("/items")
 public class ItemsController {
   // TODO move to environment variables
-  private Integer ITEMS_CHUNK_SIZE = 3;
+  private static final Integer ITEMS_CHUNK_SIZE = 3;
+
+  // TODO for test
+  private static final Integer CART_ID = 1;
 
   private static final String ITEMS_VIEW = "items";
 
   private final ItemsService itemsService;
 
-  ItemsController(final ItemsService itemsService) {
+  private final CartsService cartsService;
+
+  ItemsController(final ItemsService itemsService, CartsService cartsService) {
     this.itemsService = itemsService;
+    this.cartsService = cartsService;
   }
 
   @GetMapping("/")
@@ -51,6 +59,22 @@ public class ItemsController {
         ItemsDTO.from(items, ITEMS_CHUNK_SIZE, search, sortValue, new Paging(pageNumber, pageSize, itemsTotalCount)));
 
     return ITEMS_VIEW;
+  }
+
+  @PostMapping
+  String addRemoveToCart(
+      @RequestParam("id") Integer itemId,
+      @RequestParam("action") CartAction action,
+      @RequestParam(value = "search", required = false, defaultValue = "") String search,
+      @RequestParam(value = "sort", required = false) ItemsSort sort,
+      @RequestParam(value = "pageNumber", required = false) Integer pageNumber,
+      @RequestParam(value = "pageSize", required = false) Integer pageSize,
+      Model model
+  ) {
+    cartsService.addRemoveToCart(CART_ID, itemId, action);
+
+    return String.format("redirect:/items?search=%s&sort=%s&pageNumber=%s&pageSize=%s", search, sort, pageNumber,
+        pageSize);
   }
 
   @GetMapping("/{itemId}")
