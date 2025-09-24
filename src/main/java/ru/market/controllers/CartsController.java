@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import ru.market.dto.CartAction;
 import ru.market.dto.CartItemsDTO;
 import ru.market.dto.ItemDTO;
+import ru.market.models.Order;
 import ru.market.services.CartsService;
 
 @Controller
@@ -30,6 +31,17 @@ public class CartsController {
     model.addAttribute("items", getCartItemsDTO(CART_ID));
 
     return "cart";
+  }
+
+  @PostMapping("/buy")
+  public String buy() {
+    Order order = cartsService.buy(CART_ID);
+
+    if (order == null) {
+      return "redirect:/orders";
+    }
+
+    return "redirect:/orders/" + order.getId() + "?newOrder=true";
   }
 
   @PostMapping("/items")

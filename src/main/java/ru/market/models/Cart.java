@@ -1,5 +1,6 @@
 package ru.market.models;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -16,7 +17,7 @@ public class Cart {
   @Id
   private Integer id;
 
-  @OneToMany
+  @OneToMany(cascade = {CascadeType.REMOVE})
   @JoinColumn(name = "cart_id")
   private List<CartItem> cartItems = new ArrayList<>();
 

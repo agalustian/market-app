@@ -2,15 +2,24 @@ package ru.market.models;
 
 public class OrderItem {
 
-  private Integer id;
+  private final Integer id;
 
-  private String title;
+  private final String title;
 
-  private String description;
+  private final Integer price;
 
-  private Integer price;
+  private final Integer count;
 
-  private Integer count;
+  private OrderItem(Integer id, String title, Integer price, Integer count) {
+    this.id = id;
+    this.title = title;
+    this.price = price;
+    this.count = count;
+  }
+
+  public static OrderItem from(final CartItem cartItem, Integer totalCount) {
+    return new OrderItem(cartItem.getId(), cartItem.getItem().getTitle(), cartItem.getItem().getPrice(), totalCount);
+  }
 
   public Integer getId() {
     return id;
@@ -18,10 +27,6 @@ public class OrderItem {
 
   public String getTitle() {
     return title;
-  }
-
-  public String getDescription() {
-    return description;
   }
 
   public Integer getPrice() {

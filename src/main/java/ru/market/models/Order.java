@@ -28,6 +28,29 @@ public class Order {
   @CreatedDate
   private String createdAt;
 
+  protected Order() {
+  }
+
+  private Order(Integer id, List<OrderItem> orderItems, Integer totalSum, String createdAt) {
+    this.id = id;
+    this.orderItems = orderItems;
+    this.totalSum = totalSum;
+    this.createdAt = createdAt;
+  }
+
+  public static Order from(Cart cart) {
+    List<OrderItem> orderItems = cart.getCartItems().stream().map(
+        cartItem -> OrderItem.from(cartItem, cartItem.getCount())).toList();
+
+    Integer totalSum =
+        orderItems.stream()
+            .map(orderItem -> orderItem.getPrice() * orderItem.getCount())
+            .reduce(Integer::sum)
+            .get();
+
+    return new Order(null, orderItems, totalSum, null);
+  }
+
   public Integer getId() {
     return id;
   }
@@ -43,5 +66,6 @@ public class Order {
   public String getCreatedAt() {
     return createdAt;
   }
+
 }
 

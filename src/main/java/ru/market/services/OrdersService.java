@@ -18,4 +18,8 @@ public class OrdersService {
     return ordersRepository.findAll();
   }
 
+  public Order getOrder(final Integer id) {
+    return ordersRepository.findById(id).orElse(null);
+  }
+
 }
