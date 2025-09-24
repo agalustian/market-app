@@ -2,6 +2,7 @@ package ru.market.controllers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

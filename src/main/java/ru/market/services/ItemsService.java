@@ -1,13 +1,13 @@
 package ru.market.services;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import ru.market.dto.ItemsSort;
-import ru.market.exceptions.NotFoundException;
 import ru.market.models.Image;
 import ru.market.models.Item;
 import ru.market.repositories.CartItemsJpaRepository;
@@ -68,12 +68,12 @@ public class ItemsService {
     Item item = itemsRepository.getItemById(itemId);
 
     if (item == null) {
-      throw new NotFoundException("Item with such id not exists");
+      throw new NoSuchElementException("Item with such id not exists");
     }
 
     imagesRepository.save(new Image(itemId, image)).getContent();
 
-    item.setImgPath("/image"+itemId);
+    item.setImgPath("/image" + itemId);
 
     itemsRepository.save(item);
   }
