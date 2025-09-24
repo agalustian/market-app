@@ -57,4 +57,5 @@ public class CartItem {
   public String getUpdatedAt() {
     return updatedAt;
   }
+
 }

@@ -68,8 +68,7 @@ public class ItemsController {
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
       @RequestParam(value = "sort", required = false) ItemsSort sort,
       @RequestParam(value = "pageNumber", required = false) Integer pageNumber,
-      @RequestParam(value = "pageSize", required = false) Integer pageSize,
-      Model model
+      @RequestParam(value = "pageSize", required = false) Integer pageSize
   ) {
     cartsService.addRemoveToCart(CART_ID, itemId, action);
 
