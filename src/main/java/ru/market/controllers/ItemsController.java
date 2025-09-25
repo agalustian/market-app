@@ -2,7 +2,6 @@ package ru.market.controllers;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,7 +40,7 @@ public class ItemsController {
     this.cartsService = cartsService;
   }
 
-  @GetMapping("/")
+  @GetMapping("")
   String search(
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
       @RequestParam(value = "sort", required = false, defaultValue = "NO") ItemsSort sort,
@@ -53,10 +52,10 @@ public class ItemsController {
       return ITEMS_VIEW;
     }
 
-    List<Item> items = itemsService.search(search, sort, PageRequest.of(pageNumber, pageSize));
+    List<Item> items = itemsService.search(search, sort, PageRequest.of(pageNumber - 1, pageSize));
     Integer itemsTotalCount = itemsService.searchCount(search);
 
-    model.addAttribute("items", ItemsDTO.from(items, ITEMS_CHUNK_SIZE));
+    model.addAttribute("items", ItemsDTO.from(items, ITEMS_CHUNK_SIZE).items());
     model.addAttribute("search", search);
     model.addAttribute("sort", sort);
     model.addAttribute("paging", new Paging(pageNumber, pageSize, itemsTotalCount));
@@ -103,10 +102,10 @@ public class ItemsController {
     return "item";
   }
 
-  @PostMapping("/image/{itemId}")
-  public void saveItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {
-    itemsService.saveItemImage(itemId, image.getBytes());
-  }
+//  @PostMapping("/image/{itemId}")
+//  public void saveItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {
+//    itemsService.saveItemImage(itemId, image.getBytes());
+//  }
 
   @PostMapping("/image/{itemId}")
   public void getItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {

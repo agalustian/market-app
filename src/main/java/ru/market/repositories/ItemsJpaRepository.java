@@ -10,7 +10,7 @@ import ru.market.models.Item;
 public interface ItemsJpaRepository extends JpaRepository<Item, Integer> {
   Item getItemById(Integer id);
 
-  List<Item> searchItemsByTitleContainingOrDescriptionContaining(String title, String description, PageRequest pageRequest);
+  List<Item> findItemsByTitleContainingIgnoreCase(String title, PageRequest pageRequest);
 
   Integer countItemsByTitleContainingOrDescriptionContaining(String title, String description);
 }

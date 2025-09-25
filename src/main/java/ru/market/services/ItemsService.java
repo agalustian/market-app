@@ -42,7 +42,7 @@ public class ItemsService {
   public List<Item> search(final String search, ItemsSort sort, PageRequest pageRequest) {
     var searchValue = search.toLowerCase();
 
-    List<Item> items = itemsRepository.searchItemsByTitleContainingOrDescriptionContaining(searchValue, searchValue,
+    List<Item> items = itemsRepository.findItemsByTitleContainingIgnoreCase(searchValue,
         pageRequest.withSort(Sort.by(getSortField(sort)).ascending()));
 
     if (items.isEmpty()) {

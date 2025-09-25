@@ -10,16 +10,19 @@ import jakarta.persistence.Table;
 public class OrderItem {
 
   @Id
-  private final Integer id;
+  private Integer id;
 
   @Column(name = "title")
-  private final String title;
+  private String title;
 
   @Column(name = "price")
-  private final Integer price;
+  private Integer price;
 
   @Column(name = "count")
-  private final Integer count;
+  private Integer count;
+
+  protected OrderItem() {
+  }
 
   private OrderItem(Integer id, String title, Integer price, Integer count) {
     this.id = id;
