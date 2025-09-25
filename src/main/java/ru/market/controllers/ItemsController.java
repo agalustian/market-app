@@ -2,8 +2,10 @@ package ru.market.controllers;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +18,7 @@ import ru.market.dto.ItemDTO;
 import ru.market.dto.ItemsDTO;
 import ru.market.dto.ItemsSort;
 import ru.market.dto.Paging;
+import ru.market.models.Cart;
 import ru.market.models.Item;
 import ru.market.services.CartsService;
 import ru.market.services.ItemsService;
@@ -27,9 +30,11 @@ public class ItemsController {
   private static final Integer ITEMS_CHUNK_SIZE = 3;
 
   // TODO for test
-  private static final Integer CART_ID = 1;
+  private static final Integer CART_ID = 999;
 
   private static final String ITEMS_VIEW = "items";
+
+  private static final String ITEM_VIEW = "item";
 
   private final ItemsService itemsService;
 
@@ -79,12 +84,17 @@ public class ItemsController {
   }
 
   @PostMapping("/{itemId}")
+  @Transactional
   String addRemoveToCart(@PathVariable Integer itemId, @RequestParam CartAction action, Model model) {
     cartsService.addRemoveToCart(CART_ID, itemId, action);
 
+    if (action == CartAction.DELETE) {
+      return "redirect:/"+ITEMS_VIEW;
+    }
+
     Item item = itemsService.getItemById(itemId);
 
-    model.addAttribute("item", item);
+    model.addAttribute("item", ItemDTO.from(item));
 
     return "item";
   }
@@ -99,17 +109,21 @@ public class ItemsController {
 
     model.addAttribute("item", ItemDTO.from(item));
 
-    return "item";
+    return ITEM_VIEW;
   }
 
-//  @PostMapping("/image/{itemId}")
-//  public void saveItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {
-//    itemsService.saveItemImage(itemId, image.getBytes());
-//  }
-
   @PostMapping("/image/{itemId}")
-  public void getItemImage(@PathVariable Integer itemId, MultipartFile image) throws IOException {
-    itemsService.saveItemImage(itemId, image.getBytes());
+  public String saveItemImage(@PathVariable Integer itemId, MultipartFile image, Model model) throws IOException {
+    Item item = itemsService.saveItemImage(itemId, image.getBytes());
+
+    model.addAttribute("item", ItemDTO.from(item));
+
+    return ITEM_VIEW;
+  }
+
+  @GetMapping("/image/{itemId}")
+  public byte[] getItemImage(@PathVariable Integer itemId) {
+    return itemsService.getItemImage(itemId);
   }
 
 }

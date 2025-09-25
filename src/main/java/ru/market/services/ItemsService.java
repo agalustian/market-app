@@ -2,21 +2,23 @@ package ru.market.services;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import ru.market.dto.ItemsSort;
+import ru.market.models.CartItem;
+import ru.market.models.Image;
+import ru.market.models.Item;
 import ru.market.repositories.CartItemsJpaRepository;
 import ru.market.repositories.ImagesJpaRepository;
 import ru.market.repositories.ItemsJpaRepository;
-import ru.market.models.Image;
-import ru.market.models.Item;
 
 @Service
 public class ItemsService {
-  private static final Integer CART_ID = 3;
+  private static final Integer CART_ID = 999;
 
   private final ItemsJpaRepository itemsRepository;
 
@@ -32,11 +34,11 @@ public class ItemsService {
   }
 
   public Item getItemById(final Integer itemId) {
-    Item item = itemsRepository.getItemById(itemId);
-    var cartItemsCount = cartItemsRepository.countCartItems(CART_ID, List.of(itemId));
-    item.setCount(cartItemsCount.get(itemId));
+    CartItem cartItem = cartItemsRepository.getCartItemByCartIdAndItem_Id(CART_ID, itemId);
 
-    return item;
+    cartItem.getItem().setCount(cartItem.getCount());
+
+    return cartItem.getItem();
   }
 
   public List<Item> search(final String search, ItemsSort sort, PageRequest pageRequest) {
@@ -49,7 +51,11 @@ public class ItemsService {
       return items;
     }
 
-    var cartItemsCount = cartItemsRepository.countCartItems(CART_ID, items.stream().map(Item::getId).toList());
+    var cartItemsCount =
+        cartItemsRepository.getCartItemsByItemIdInAndCartId(items.stream().map(Item::getId).toList(), CART_ID).stream()
+            .collect(
+                Collectors.toMap((cartItem) -> cartItem.getItem().getId(), (cartItem) -> cartItem.getCount())
+            );
 
     for (Item item : items) {
       item.setCount(cartItemsCount.get(item.getId()));
@@ -63,7 +69,7 @@ public class ItemsService {
   }
 
   @Transactional
-  public void saveItemImage(final Integer itemId, byte[] image) {
+  public Item saveItemImage(final Integer itemId, byte[] image) {
     Assert.notNull(itemId, "Item id is required for getting image");
     Item item = itemsRepository.getItemById(itemId);
 
@@ -76,6 +82,8 @@ public class ItemsService {
     item.setImgPath("/image" + itemId);
 
     itemsRepository.save(item);
+
+    return item;
   }
 
   public byte[] getItemImage(final Integer itemId) {

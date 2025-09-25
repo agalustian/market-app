@@ -13,6 +13,7 @@ import ru.market.models.Order;
 public class CartsService {
 
   private final CartsJpaRepository cartsRepository;
+
   private final OrdersJpaRepository orderRepository;
 
   public CartsService(CartsJpaRepository cartsRepository, OrdersJpaRepository orderRepository) {
@@ -40,6 +41,8 @@ public class CartsService {
       case MINUS -> cartItem.decrementCount();
       case DELETE -> cart.getCartItems().remove(cartItem);
     }
+
+    cartsRepository.save(cart);
 
     return cart;
   }

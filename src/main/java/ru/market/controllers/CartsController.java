@@ -17,7 +17,7 @@ import ru.market.services.CartsService;
 public class CartsController {
 
   // TODO for test
-  private static final Integer CART_ID = 1;
+  private static final Integer CART_ID = 999;
 
   private final CartsService cartsService;
 
