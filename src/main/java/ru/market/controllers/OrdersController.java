@@ -23,7 +23,7 @@ public class OrdersController {
     this.ordersService = ordersService;
   }
 
-  @GetMapping("/orders")
+  @GetMapping
   public String getOrders(final Model model) {
     List<OrderDTO> orders = ordersService.getOrders().stream().map(OrderDTO::from).toList();
 
@@ -32,7 +32,7 @@ public class OrdersController {
     return ORDERS_VIEW;
   }
 
-  @GetMapping("/orders/{id}")
+  @GetMapping("/{id}")
   public String getOrder(@PathVariable("id") Integer orderId,
                          @RequestParam(value = "newOrder", required = false) Boolean newOrder,
                          Model model) {
@@ -42,7 +42,7 @@ public class OrdersController {
       return "redirect:/" + ORDERS_VIEW;
     }
 
-    model.addAttribute("order", order);
+    model.addAttribute("order", OrderDTO.from(order));
     model.addAttribute("newOrder", newOrder);
 
     return "order";

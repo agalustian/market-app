@@ -18,7 +18,7 @@ public class Order {
   @Id
   private Integer id;
 
-  @OneToMany(cascade = {CascadeType.REMOVE}, fetch = FetchType.LAZY)
+  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
   @JoinColumn(name = "order_id")
   private List<OrderItem> orderItems = new ArrayList<>();
 
@@ -28,7 +28,7 @@ public class Order {
   protected Order() {
   }
 
-  private Order(Integer id, List<OrderItem> orderItems, Integer totalSum) {
+  public Order(Integer id, List<OrderItem> orderItems, Integer totalSum) {
     this.id = id;
     this.orderItems = orderItems;
     this.totalSum = totalSum;
@@ -53,5 +53,8 @@ public class Order {
     return totalSum;
   }
 
+  public void setOrderItems(List<OrderItem> orderItems) {
+    this.orderItems = orderItems;
+  }
 }
 

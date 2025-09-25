@@ -12,6 +12,9 @@ public class OrderItem {
   @Id
   private Integer id;
 
+  @Column(name = "order_id")
+  private Integer orderId;
+
   @Column(name = "title")
   private String title;
 
@@ -24,15 +27,16 @@ public class OrderItem {
   protected OrderItem() {
   }
 
-  private OrderItem(Integer id, String title, Integer price, Integer count) {
+  public OrderItem(Integer id, Integer orderId, String title, Integer price, Integer count) {
     this.id = id;
+    this.orderId = orderId;
     this.title = title;
     this.price = price;
     this.count = count;
   }
 
   public static OrderItem from(final CartItem cartItem, Integer totalCount) {
-    return new OrderItem(cartItem.getId(), cartItem.getItem().getTitle(), cartItem.getItem().getPrice(), totalCount);
+    return new OrderItem(cartItem.getId(), null, cartItem.getItem().getTitle(), cartItem.getItem().getPrice(), totalCount);
   }
 
   public Integer getId() {
