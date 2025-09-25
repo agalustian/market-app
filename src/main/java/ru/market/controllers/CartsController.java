@@ -1,5 +1,7 @@
 package ru.market.controllers;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,7 +54,11 @@ public class CartsController {
   private String getCartItemsView(final Model model, final Integer cartId) {
     Cart cart = cartsService.getCart(cartId);
 
-    model.addAttribute("items", cart.getCartItems().stream().map(ItemDTO::from).toList());
+    List<ItemDTO> cartItems = cart.getCartItems() != null
+        ? cart.getCartItems().stream().map(ItemDTO::from).toList()
+        : new ArrayList<>();
+
+    model.addAttribute("items", cartItems);
     model.addAttribute("total", cart.getTotalSum());
 
     return "cart";

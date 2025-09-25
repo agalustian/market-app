@@ -41,8 +41,7 @@ public class Cart {
   public Integer getTotalSum() {
     return cartItems.stream()
         .map(item -> item.getItem().getPrice() * item.getCount())
-        .reduce(Integer::sum)
-        .get();
+        .reduce(0, Integer::sum);
   }
 
 }

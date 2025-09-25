@@ -60,6 +60,8 @@ Build Dockerfile:  `sh ./gradlew build && docker build -t market:test .`
 
 Run docker container: `docker run -p 8090:8090 market:test`
 
+File loading example: `curl --location 'http://localhost:8090/items/image/4' --form ''`
+
 ## Actuator endpoints
 Opened actuator endpoints list:
 - health

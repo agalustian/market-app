@@ -2,7 +2,6 @@ package ru.market.controllers;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,13 +11,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import ru.market.dto.CartAction;
 import ru.market.dto.ItemDTO;
 import ru.market.dto.ItemsDTO;
 import ru.market.dto.ItemsSort;
 import ru.market.dto.Paging;
-import ru.market.models.Cart;
 import ru.market.models.Item;
 import ru.market.services.CartsService;
 import ru.market.services.ItemsService;
@@ -53,10 +52,6 @@ public class ItemsController {
       @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize,
       final Model model
   ) {
-    if (search.isEmpty()) {
-      return ITEMS_VIEW;
-    }
-
     List<Item> items = itemsService.search(search, sort, PageRequest.of(pageNumber - 1, pageSize));
     Integer itemsTotalCount = itemsService.searchCount(search);
 
@@ -122,6 +117,7 @@ public class ItemsController {
   }
 
   @GetMapping("/image/{itemId}")
+  @ResponseBody
   public byte[] getItemImage(@PathVariable Integer itemId) {
     return itemsService.getItemImage(itemId);
   }

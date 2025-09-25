@@ -34,11 +34,12 @@ public class ItemsService {
   }
 
   public Item getItemById(final Integer itemId) {
+    Item item = itemsRepository.getItemById(itemId);
     CartItem cartItem = cartItemsRepository.getCartItemByCartIdAndItem_Id(CART_ID, itemId);
 
-    cartItem.getItem().setCount(cartItem.getCount());
+    item.setCount(cartItem != null ? cartItem.getCount() : 0);
 
-    return cartItem.getItem();
+    return item;
   }
 
   public List<Item> search(final String search, ItemsSort sort, PageRequest pageRequest) {
@@ -53,7 +54,7 @@ public class ItemsService {
     var cartItemsCount =
         cartItemsRepository.getCartItemsByItemIdInAndCartId(items.stream().map(Item::getId).toList(), CART_ID).stream()
             .collect(
-                Collectors.toMap((cartItem) -> cartItem.getItem().getId(), (cartItem) -> cartItem.getCount())
+                Collectors.toMap((cartItem) -> cartItem.getItem().getId(), CartItem::getCount)
             );
 
     for (Item item : items) {
@@ -78,7 +79,7 @@ public class ItemsService {
 
     imagesRepository.save(new Image(itemId, image)).getContent();
 
-    item.setImgPath("/image" + itemId);
+    item.setImgPath("/image/" + itemId);
 
     itemsRepository.save(item);
 

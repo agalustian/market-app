@@ -34,6 +34,12 @@ public class CartItem {
     this.count = count;
   }
 
+  public CartItem(Integer cartId, Item item, Integer count) {
+    this.cartId = cartId;
+    this.item = item;
+    this.count = count;
+  }
+
   public Integer getId() {
     return id;
   }
