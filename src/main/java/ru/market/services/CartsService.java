@@ -4,10 +4,10 @@ import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.market.dto.CartAction;
-import ru.market.repositories.CartsJpaRepository;
-import ru.market.repositories.OrdersJpaRepository;
 import ru.market.models.Cart;
 import ru.market.models.Order;
+import ru.market.repositories.CartsJpaRepository;
+import ru.market.repositories.OrdersJpaRepository;
 
 @Service
 public class CartsService {
@@ -22,15 +22,17 @@ public class CartsService {
   }
 
   public Cart getCart(final Integer cartId) {
-    // TODO fix hardcode, its for test, replace it when users will be added
-    return cartsRepository.getCartById(cartId);
+    return cartsRepository.findCartById(cartId);
   }
 
   @Transactional
   public Cart addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
     Cart cart = cartsRepository.getCartById(cartId);
 
-    var cartItem = cart.getCartItems().stream().filter(item -> Objects.equals(item.getItem().getId(), itemId)).toList().getFirst();
+    var cartItem = cart.getCartItems().stream()
+        .filter(item -> Objects.equals(item.getItem().getId(), itemId))
+        .toList()
+        .getFirst();
 
     if (cartItem == null) {
       return null;

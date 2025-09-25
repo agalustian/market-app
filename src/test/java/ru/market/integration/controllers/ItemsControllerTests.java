@@ -19,9 +19,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ru.market.dto.ItemDTO;
+import ru.market.integration.IntegrationTestConfig;
 import ru.market.models.Cart;
 import ru.market.models.CartItem;
 import ru.market.models.Item;
@@ -29,20 +29,15 @@ import ru.market.repositories.CartsJpaRepository;
 import ru.market.repositories.ItemsJpaRepository;
 
 @TestPropertySource(locations = "classpath:application.yaml")
-@SpringBootTest
-@AutoConfigureMockMvc
-public class ItemsControllerTests {
+class ItemsControllerTests extends IntegrationTestConfig {
 
-  private final MockMvc mockMvc;
+  private final CartsJpaRepository cartsJpaRepository;
 
-  private CartsJpaRepository cartsJpaRepository;
-
-  private ItemsJpaRepository itemsJpaRepository;
+  private final ItemsJpaRepository itemsJpaRepository;
 
   @Autowired
-  ItemsControllerTests(final MockMvc mockMvc, CartsJpaRepository cartsJpaRepository,
+  ItemsControllerTests(CartsJpaRepository cartsJpaRepository,
                        ItemsJpaRepository itemsJpaRepository) {
-    this.mockMvc = mockMvc;
     this.cartsJpaRepository = cartsJpaRepository;
     this.itemsJpaRepository = itemsJpaRepository;
   }
@@ -85,9 +80,8 @@ public class ItemsControllerTests {
   }
 
   @Nested
-  @SpringBootTest
-  @AutoConfigureMockMvc
-  class AddRemoveToCartFromItemsView {
+  class AddRemoveToCartFromItemsView extends IntegrationTestConfig {
+
     private static final String ACTUAL_URL_PARAMS = "search=test&sort=ALPHA&pageNumber=1&pageSize=5";
 
     @Test
@@ -110,6 +104,7 @@ public class ItemsControllerTests {
           .andExpect(status().is3xxRedirection())
           .andExpect(redirectedUrl("/items?" + ACTUAL_URL_PARAMS));
     }
+
   }
 
   @Test

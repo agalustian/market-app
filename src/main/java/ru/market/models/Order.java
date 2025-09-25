@@ -4,6 +4,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -16,6 +18,7 @@ import java.util.List;
 public class Order {
 
   @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
   @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
@@ -28,8 +31,7 @@ public class Order {
   protected Order() {
   }
 
-  public Order(Integer id, List<OrderItem> orderItems, Integer totalSum) {
-    this.id = id;
+  public Order(List<OrderItem> orderItems, Integer totalSum) {
     this.orderItems = orderItems;
     this.totalSum = totalSum;
   }
@@ -38,7 +40,7 @@ public class Order {
     List<OrderItem> orderItems = cart.getCartItems().stream().map(
         cartItem -> OrderItem.from(cartItem, cartItem.getCount())).toList();
 
-    return new Order(null, orderItems, cart.getTotalSum());
+    return new Order(orderItems, cart.getTotalSum());
   }
 
   public Integer getId() {
@@ -53,8 +55,5 @@ public class Order {
     return totalSum;
   }
 
-  public void setOrderItems(List<OrderItem> orderItems) {
-    this.orderItems = orderItems;
-  }
 }
 

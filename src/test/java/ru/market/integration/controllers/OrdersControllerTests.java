@@ -17,18 +17,19 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import ru.market.dto.OrderDTO;
+import ru.market.integration.IntegrationTestConfig;
 import ru.market.models.Order;
 import ru.market.models.OrderItem;
 import ru.market.repositories.OrdersJpaRepository;
 
 @TestPropertySource(locations = "classpath:application.yaml")
-@SpringBootTest
-@AutoConfigureMockMvc
-public class OrdersControllerTests {
+class OrdersControllerTests extends IntegrationTestConfig {
 
   private final MockMvc mockMvc;
 
   private final OrdersJpaRepository ordersJpaRepository;
+
+  private Integer orderId;
 
   @Autowired
   OrdersControllerTests(final MockMvc mockMvc, OrdersJpaRepository ordersJpaRepository) {
@@ -40,19 +41,15 @@ public class OrdersControllerTests {
   void prepare() {
     ordersJpaRepository.deleteAll();
 
-    Order order = new Order(1111, null, 800);
+    OrderItem orderItem = new OrderItem(111, 1, "Test", 100, 8);
+    Order order = new Order(List.of(orderItem), 800);
 
-    ordersJpaRepository.save(order);
-
-    OrderItem orderItem = new OrderItem(111, 1111, "Test", 100, 8);
-    order.setOrderItems(List.of(orderItem));
-
-    ordersJpaRepository.save(order);
+    this.orderId = ordersJpaRepository.save(order).getId();
   }
 
   @Test
   void shouldGetOrderById() throws Exception {
-    MvcResult mvcResult = mockMvc.perform(get("/orders/1111"))
+    MvcResult mvcResult = mockMvc.perform(get("/orders/"+orderId))
         .andExpect(status().isOk())
         .andExpect(view().name("order"))
         .andExpect(content().contentType("text/html;charset=UTF-8"))
@@ -64,7 +61,7 @@ public class OrdersControllerTests {
     OrderDTO orderDTO = (OrderDTO) model.get("order");
     var orderItems = orderDTO.items();
 
-    assertEquals(1111, orderDTO.id());
+    assertEquals(orderId, orderDTO.id());
     assertEquals(800, orderDTO.totalSum());
     assertEquals(1, orderItems.size());
   }

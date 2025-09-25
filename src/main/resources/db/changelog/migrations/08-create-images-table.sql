@@ -1,5 +1,5 @@
 create table if not exists images
 (
-    id      integer primary key references items (id),
+    id      integer primary key,
     content bytea not null
 )
