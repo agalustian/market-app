@@ -34,5 +34,17 @@ dependencies {
 }
 
 tasks.named('test') {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        filter {
+            exclude('**/integration/**')
+        }
+    }
+}
+
+tasks.register("integrationTest", Test) {
+    useJUnitPlatform {
+        filter {
+            include('**/integration/**')
+        }
+    }
 }
