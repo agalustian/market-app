@@ -42,10 +42,9 @@ public class ItemsService {
   }
 
   public List<Item> search(final String search, ItemsSort sort, PageRequest pageRequest) {
-    var searchValue = search.toLowerCase();
-
-    List<Item> items = itemsRepository.findItemsByTitleContainingIgnoreCase(searchValue,
-        pageRequest.withSort(Sort.by(getSortField(sort)).ascending()));
+    List<Item> items =
+        itemsRepository.findItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search,
+            pageRequest.withSort(Sort.by(getSortField(sort)).ascending()));
 
     if (items.isEmpty()) {
       return items;
@@ -65,7 +64,7 @@ public class ItemsService {
   }
 
   public Integer searchCount(final String search) {
-    return itemsRepository.countItemsByTitleContainingOrDescriptionContaining(search, search);
+    return itemsRepository.countItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search);
   }
 
   @Transactional
