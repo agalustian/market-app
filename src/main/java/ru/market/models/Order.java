@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "orders")
@@ -53,6 +54,20 @@ public class Order {
 
   public Integer getTotalSum() {
     return totalSum;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Order order = (Order) o;
+    return Objects.equals(id, order.id) && Objects.equals(totalSum, order.totalSum);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, totalSum);
   }
 
 }
