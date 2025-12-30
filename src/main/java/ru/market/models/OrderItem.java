@@ -1,28 +1,31 @@
 package ru.market.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "order_items")
-public class OrderItem {
+@Table("order_items")
+public class OrderItem implements Persistable<Integer> {
 
   @Id
   private Integer id;
 
-  @Column(name = "order_id")
+  @Column("order_id")
   private Integer orderId;
 
-  @Column(name = "title")
+  @Column("title")
   private String title;
 
-  @Column(name = "price")
+  @Column("price")
   private Integer price;
 
-  @Column(name = "count")
+  @Column("count")
   private Integer count;
+
+  @Transient
+  private boolean newAggregate = false;
 
   protected OrderItem() {
   }
@@ -35,10 +38,14 @@ public class OrderItem {
     this.count = count;
   }
 
-  public static OrderItem from(final CartItem cartItem, Integer totalCount) {
-    return new OrderItem(cartItem.getId(), null, cartItem.getItem().getTitle(), cartItem.getItem().getPrice(), totalCount);
+  public static OrderItem from(final Integer orderId, CartItem cartItem, Integer totalCount) {
+    var orderItem = new OrderItem(cartItem.getId(), orderId, cartItem.getTitle(), cartItem.getPrice(), totalCount);
+    orderItem.setNewAggregate(true);
+
+    return orderItem;
   }
 
+  @Override
   public Integer getId() {
     return id;
   }
@@ -53,6 +60,15 @@ public class OrderItem {
 
   public Integer getCount() {
     return count;
+  }
+
+  public void setNewAggregate(boolean newAggregate) {
+    this.newAggregate = newAggregate;
+  }
+
+  @Override
+  public boolean isNew() {
+    return newAggregate;
   }
 
 }
