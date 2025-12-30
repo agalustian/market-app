@@ -1,0 +1,13 @@
+--insert into items (id, title, img_path, description, price)
+--values
+--    ('1', 'Item 1','/image/1', 'Great item', 1000),
+--    ('2', 'Item 2','/image/2', 'Great item 2', 10002),
+--    ('3', 'Item 3','/image/3', 'Great item 3', 10003),
+--    ('4', 'Item 4','/image/4', 'Great item 4', 10004),
+--    ('5', 'Item 5','/image/5', 'Great item 5', 10005),
+--    ('6', 'Item 6','/image/6', 'Great item 6', 10006);
+--
+--insert into cart_items (item_id, cart_id, count)
+--values
+--    ('1', '999', 5),
+--    ('2', '999', 52);
