@@ -2,21 +2,17 @@ server:
   port: 8090
 
 spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/marketdb
+    username: postgres
+    password: mysecretpassword
+  sql:
+    init:
+      mode: always
   application:
     name: MarketApp
   main:
     banner-mode: off
-  datasource:
-    url: jdbc:h2:mem:marketdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    driver-class-name: org.h2.Driver
-  liquibase:
-    change-log: "classpath:/db/changelog/db.changelog-master.yaml"
-  sql:
-    init:
-      platform: h2
-      mode: always
-      schema-locations: classpath:test-schema.sql
 
 management:
   endpoints:
