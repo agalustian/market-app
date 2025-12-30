@@ -1,0 +1,47 @@
+package ru.market.models;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+
+// TODO entity for link cart to userId
+@Entity
+@Table(name = "carts")
+public class Cart {
+
+  @Id
+  private Integer id;
+
+  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY, orphanRemoval = true)
+  @JoinColumn(name = "cart_id")
+  private List<CartItem> cartItems = new ArrayList<>();
+
+  public Cart(Integer id, List<CartItem> cartItems) {
+    this.id = id;
+    this.cartItems = cartItems;
+  }
+
+  protected Cart() {
+  }
+
+  public Integer getId() {
+    return id;
+  }
+
+  public List<CartItem> getCartItems() {
+    return cartItems;
+  }
+
+  public Integer getTotalSum() {
+    return cartItems.stream()
+        .map(item -> item.getItem().getPrice() * item.getCount())
+        .reduce(0, Integer::sum);
+  }
+
+}
