@@ -1,69 +1,87 @@
 package ru.market.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
 @Table(name = "cart_items")
 public class CartItem {
 
   @Id
   private Integer id;
 
-  @Column(name = "cart_id", nullable = false, updatable = false)
+  @Column("cart_id")
   private Integer cartId;
 
-  @ManyToOne()
-  @JoinColumn(name = "item_id", referencedColumnName = "id")
-  private Item item;
+  @Column("item_id")
+  private Integer itemId;
 
-  @Column(name = "count", nullable = false, updatable = true)
+  @Column("count")
   private Integer count;
+
+  @Column("price")
+  private Integer price;
+
+  @Column("title")
+  private String title;
+
+  @Column("img_path")
+  private String imgPath;
+
+  @Column("description")
+  private String description;
 
   protected CartItem() {
   }
 
-  public CartItem(Integer id, Integer cartId, Item item, Integer count) {
+  public CartItem(Integer id, Integer cartId, Integer itemId, Integer count, String title, Integer price, String imgPath, String description) {
     this.id = id;
     this.cartId = cartId;
-    this.item = item;
+    this.itemId = itemId;
+    this.price = price;
     this.count = count;
+    this.title = title;
+    this.imgPath = imgPath;
+    this.description = description;
   }
 
-  public CartItem(Integer cartId, Item item, Integer count) {
+  public CartItem(Integer cartId, Integer itemId, Integer count) {
     this.cartId = cartId;
-    this.item = item;
+    this.itemId = itemId;
     this.count = count;
   }
 
   public Integer getId() {
     return id;
   }
+  public Integer getItemId() {
+    return itemId;
+  }
 
   public Integer getCartId() {
     return cartId;
-  }
-
-  public Item getItem() {
-    return item;
   }
 
   public Integer getCount() {
     return count;
   }
 
-  public void incrementCount() {
-    this.count = count + 1;
+  public Integer getPrice() {
+    return price;
   }
 
-  public void decrementCount() {
-    if (count > 0) {
-      this.count = count - 1;
-    }
+  public String getTitle() {
+    return title;
+  }
+
+  public String getImgPath() {
+    return imgPath;
+  }
+
+  public String getDescription() {
+    return description;
   }
 
 }
