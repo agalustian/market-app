@@ -1,36 +1,26 @@
 package ru.market.models;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "items")
+@Table("items")
 public class Item {
 
   @Id
   private Integer id;
 
-  @Column(name = "title", nullable = false, updatable = true)
+  @Column("title")
   private String title;
 
-  @Column(name = "price", nullable = false, updatable = true)
+  @Column("price")
   private Integer price;
 
-  @Column(name = "description", nullable = false)
+  @Column("description")
   private String description;
 
-  @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-  @JoinColumn(name = "id", referencedColumnName = "id")
-  private Image image;
-
-  @Column(name = "img_path", nullable = true)
+  @Column("img_path")
   private String imgPath;
 
   @Transient
@@ -38,6 +28,13 @@ public class Item {
 
   public Item(Integer id, String title, Integer price, String description, String imgPath) {
     this.id = id;
+    this.title = title;
+    this.price = price;
+    this.description = description;
+    this.imgPath = imgPath;
+  }
+
+  public Item(String title, Integer price, String description, String imgPath) {
     this.title = title;
     this.price = price;
     this.description = description;
