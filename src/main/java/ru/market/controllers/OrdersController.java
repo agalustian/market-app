@@ -1,14 +1,12 @@
 package ru.market.controllers;
 
-import java.util.List;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import ru.market.dto.OrderDTO;
-import ru.market.models.Order;
+import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Mono;
 import ru.market.services.OrdersService;
 
 @Controller
@@ -24,28 +22,26 @@ public class OrdersController {
   }
 
   @GetMapping
-  public String getOrders(final Model model) {
-    List<OrderDTO> orders = ordersService.getOrders().stream().map(OrderDTO::from).toList();
-
-    model.addAttribute("orders", orders);
-
-    return ORDERS_VIEW;
+  public Mono<Rendering> getOrders() {
+    return Mono.just(
+        Rendering.view(ORDERS_VIEW)
+            .modelAttribute("orders", ordersService.getOrders())
+            .build()
+    );
   }
 
   @GetMapping("/{id}")
-  public String getOrder(@PathVariable("id") Integer orderId,
-                         @RequestParam(value = "newOrder", required = false) Boolean newOrder,
-                         Model model) {
-    Order order = ordersService.getOrder(orderId);
+  public Mono<Rendering> getOrder(@PathVariable("id") Integer orderId,
+                                  @RequestParam(value = "newOrder", required = false) Boolean newOrder) {
+    return ordersService.getOrder(orderId)
+        .map(order ->
+            Rendering.view("order")
+                .modelAttribute("order", order)
+                .modelAttribute("newOrder", newOrder)
+                .build()
 
-    if (order == null) {
-      return "redirect:/" + ORDERS_VIEW;
-    }
-
-    model.addAttribute("order", OrderDTO.from(order));
-    model.addAttribute("newOrder", newOrder);
-
-    return "order";
+        )
+        .switchIfEmpty(Mono.just(Rendering.redirectTo(ORDERS_VIEW).build()));
   }
 
 }
