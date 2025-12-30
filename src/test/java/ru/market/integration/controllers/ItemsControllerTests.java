@@ -1,154 +1,136 @@
 package ru.market.integration.controllers;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.Objects;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.BodyInserters;
+import reactor.core.publisher.Mono;
+import ru.market.controllers.ItemsController;
+import ru.market.dto.CartAction;
 import ru.market.dto.ItemDTO;
-import ru.market.integration.IntegrationTestConfig;
-import ru.market.models.Cart;
-import ru.market.models.CartItem;
-import ru.market.models.Item;
-import ru.market.repositories.CartsJpaRepository;
-import ru.market.repositories.ItemsJpaRepository;
+import ru.market.dto.ItemsSort;
+import ru.market.services.CartsService;
+import ru.market.services.ItemsService;
 
-@TestPropertySource(locations = "classpath:application.yaml")
-class ItemsControllerTests extends IntegrationTestConfig {
-
-  private final CartsJpaRepository cartsJpaRepository;
-
-  private final ItemsJpaRepository itemsJpaRepository;
+@WebFluxTest(ItemsController.class)
+class ItemsControllerTests extends BaseControllerTests {
 
   @Autowired
-  ItemsControllerTests(CartsJpaRepository cartsJpaRepository,
-                       ItemsJpaRepository itemsJpaRepository) {
-    this.cartsJpaRepository = cartsJpaRepository;
-    this.itemsJpaRepository = itemsJpaRepository;
-  }
+  private WebTestClient webTestClient;
 
-  @BeforeEach
-  void prepare() {
-    cartsJpaRepository.deleteAll();
-    itemsJpaRepository.deleteAll();
+  @MockitoBean
+  private ItemsService itemsService;
 
-    var item = new Item(1, "Test", 100, "description", "test-path");
-    var item2 = new Item(2, "another-test", 100, "description", "test-path");
-    var item3 = new Item(3, "other-test", 100, "description", "test-path");
-    var cartItem = new CartItem(999 + 1, 999, item, 10);
-    var cartItem2 = new CartItem(999 + 2, 999, item2, 5);
-    var cartItem3 = new CartItem(999 + 3, 999, item3, 2);
+  @MockitoBean
+  private CartsService cartsService;
 
-    itemsJpaRepository.saveAll(List.of(item, item2, item3));
-    cartsJpaRepository.save(new Cart(999, List.of(cartItem, cartItem2, cartItem3)));
+  @Test
+  void shouldSearchItems() {
+    when(itemsService.search(eq("test"), eq(ItemsSort.NO), any(PageRequest.class))).thenReturn(
+        generateItems().map(ItemDTO::from));
+    when(itemsService.searchCount(eq("test"))).thenReturn(Mono.just(5));
+
+    webTestClient.get()
+        .uri("/items?search=test&sort=NO&pageNumber=1&pageSize=1")
+        .exchange()
+        .expectStatus().is2xxSuccessful()
+        .expectHeader().contentType("text/html")
+        .expectBody(String.class)
+        .value(html -> {
+          assert html.contains("input type=\"hidden\" name=\"itemId\" value=\"2\">");
+          assert html.contains("<input type=\"hidden\" name=\"search\" value=\"test\">");
+          assert html.contains("<input type=\"hidden\" name=\"sort\" value=\"NO\">");
+          assert html.contains("<input type=\"hidden\" name=\"pageSize\" value=\"1\">");
+          assert html.contains("<input type=\"hidden\" name=\"pageNumber\" value=\"1\">");
+        });
   }
 
   @Test
-  void shouldSearchItems() throws Exception {
-    mockMvc.perform(get("/items?search=test&sort=NO&pageNumber=1&pageSize=1"))
-        .andExpect(status().isOk())
-        .andExpect(view().name("items"))
-        .andExpect(content().contentType("text/html;charset=UTF-8"))
-        .andExpect(model().attributeExists("items"))
-        .andExpect(model().attributeExists("search"))
-        .andExpect(model().attributeExists("sort"))
-        .andExpect(model().attributeExists("paging"));
-  }
+  void shouldGetItemById() {
+    when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(generateItemDTO().blockFirst())));
 
-  @Test
-  void shouldGetItemById() throws Exception {
-    mockMvc.perform(get("/items/1"))
-        .andExpect(status().isOk())
-        .andExpect(view().name("item"))
-        .andExpect(content().contentType("text/html;charset=UTF-8"))
-        .andExpect(model().attributeExists("item"));
+    webTestClient.get()
+        .uri("/items/1")
+        .exchange()
+        .expectStatus().is2xxSuccessful()
+        .expectHeader().contentType("text/html")
+        .expectBody(String.class)
+        .value(html -> {
+          assert html.contains("<h5 class=\"card-title\">Test</h5>");
+        });
   }
 
   @Nested
-  class AddRemoveToCartFromItemsView extends IntegrationTestConfig {
+  @WebFluxTest(ItemsController.class)
+  class AddRemoveToCartFromItemsView {
 
     private static final String ACTUAL_URL_PARAMS = "search=test&sort=ALPHA&pageNumber=1&pageSize=5";
 
-    @Test
-    void shouldAddItemToCart() throws Exception {
-      mockMvc.perform(post("/items?id=1&action=PLUS&" + ACTUAL_URL_PARAMS))
-          .andExpect(status().is3xxRedirection())
-          .andExpect(redirectedUrl("/items?" + ACTUAL_URL_PARAMS));
-    }
+    @ParameterizedTest
+    @EnumSource(CartAction.class)
+    void shouldAddRemoveItemToCart(CartAction action) {
+      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
+      when(cartsService.getCart(999)).thenReturn(generateItemDTO());
 
-    @Test
-    void shouldDecrementItemInCart() throws Exception {
-      mockMvc.perform(post("/items?id=1&action=MINUS&" + ACTUAL_URL_PARAMS))
-          .andExpect(status().is3xxRedirection())
-          .andExpect(redirectedUrl("/items?" + ACTUAL_URL_PARAMS));
-    }
-
-    @Test
-    void shouldDeleteItemInCart() throws Exception {
-      mockMvc.perform(post("/items?id=1&action=DELETE&" + ACTUAL_URL_PARAMS))
-          .andExpect(status().is3xxRedirection())
-          .andExpect(redirectedUrl("/items?" + ACTUAL_URL_PARAMS));
+      webTestClient.post()
+          .uri("/items?" + ACTUAL_URL_PARAMS)
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(BodyInserters.fromFormData(generateAddRemoveToCartBody(action)))
+          .exchange()
+          .expectStatus().is3xxRedirection();
     }
 
   }
 
-  @Test
-  void shouldAddItemToCart() throws Exception {
-    MvcResult mvcResult = mockMvc.perform(post("/items/1?action=PLUS"))
-        .andExpect(status().isOk())
-        .andExpect(view().name("item"))
-        .andExpect(content().contentType("text/html;charset=UTF-8"))
-        .andExpect(model().attributeExists("item"))
-        .andReturn();
+  @Nested
+  @WebFluxTest(ItemsController.class)
+  class AddRemoveToCartFromItemDetailView {
 
-    var model = mvcResult.getModelAndView().getModel();
+    @ParameterizedTest
+    @EnumSource(CartAction.class)
+    void shouldAddRemoveItemToCart(CartAction action) {
+      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
+      when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(generateItemDTO().blockFirst())));
 
-    ItemDTO item = (ItemDTO) model.get("item");
+      var responseSpec = webTestClient.post()
+          .uri("/items/1")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(BodyInserters.fromFormData(generateAddRemoveToCartBody(action)))
+          .exchange();
 
-    assertEquals(11, item.count());
+      switch (action) {
+        case PLUS -> responseSpec.expectStatus().is2xxSuccessful();
+        case MINUS -> responseSpec.expectStatus().is2xxSuccessful();
+        case DELETE -> responseSpec.expectStatus().is3xxRedirection();
+      }
+    }
+
   }
 
   @Test
-  void shouldDecrementItemInCart() throws Exception {
-    MvcResult mvcResult = mockMvc.perform(post("/items/1?action=MINUS")).andReturn();
-
-    var model = mvcResult.getModelAndView().getModel();
-
-    ItemDTO item = (ItemDTO) model.get("item");
-
-    assertEquals(9, item.count());
-  }
-
-  @Test
-  void shouldDeleteItemInCart() throws Exception {
-    mockMvc.perform(post("/items/1?action=DELETE"))
-        .andExpect(status().is3xxRedirection())
-        .andExpect(redirectedUrl("/items"));
-  }
-
-  @Test
-  void shouldSaveImage() throws Exception {
+  void shouldGetImage() {
     byte[] image = {108};
-    mockMvc.perform(multipart("/items/image/1")
-            .file(new MockMultipartFile("image", image))
-            .contentType("multipart/form-data")
-        )
-        .andExpect(status().isOk())
-        .andExpect(view().name("item"))
-        .andExpect(model().attributeExists("item"));
+
+    when(itemsService.getItemImage(1)).thenReturn(Mono.just(image));
+
+    webTestClient.get()
+        .uri("/items/image/1")
+        .exchange()
+        .expectStatus().is2xxSuccessful()
+        .expectBody(byte[].class)
+        .isEqualTo(image);
   }
 
 }
