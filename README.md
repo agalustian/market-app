@@ -12,9 +12,9 @@ Search items, add to cart and buy it.
 ## Tech stack
 Language: `Java 21`
 
-Framework: `Spring core + Spring boot + Spring Jpa`
+Framework: `Spring core + Spring boot + Spring WebFlux + Spring R2DBC`
 
-Test tools: `Spring boot test \ JUNIT 5 \ Jupiter \ Mockito`
+Test tools: `Spring boot test \ JUNIT 5 \ Jupiter \ Mockito \ TestContainers`
 
 Build tools: `Gradle`
 
@@ -59,6 +59,8 @@ Build jar: `./gradlew build` - path `build/libs/market-0.0.1.jar`
 Build Dockerfile:  `sh ./gradlew build && docker build -t market:test .`
 
 Run docker container: `docker run -p 8090:8090 market:test`
+
+Run postgres: `docker compose up -d`
 
 File loading example: `curl --location 'http://localhost:8090/items/image/4' --form ''`
 
