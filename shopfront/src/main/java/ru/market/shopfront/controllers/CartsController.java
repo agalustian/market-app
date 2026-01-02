@@ -1,5 +1,6 @@
 package ru.market.shopfront.controllers;
 
+import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.reactive.result.view.Rendering;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.dto.AddRemoveToCartRequest;
 import ru.market.shopfront.services.CartsService;
+import ru.market.shopfront.services.PaymentService;
 
 @Controller
 @RequestMapping("/cart")
@@ -20,8 +22,11 @@ public class CartsController {
 
   private final CartsService cartsService;
 
-  CartsController(final CartsService cartsService) {
+  private final PaymentService paymentService;
+
+  CartsController(final CartsService cartsService, final PaymentService paymentService) {
     this.cartsService = cartsService;
+    this.paymentService = paymentService;
   }
 
   @GetMapping("/items")
@@ -48,12 +53,14 @@ public class CartsController {
   private Mono<Rendering> getCartItemsView(final Integer cartId) {
     return cartsService.getCart(cartId)
         .collectList()
-        .map(cartItems -> Rendering.view("cart")
-            .modelAttribute("items", cartItems)
-            .modelAttribute("total", cartItems.stream().map(cartItem -> cartItem.price() * cartItem.count())
-                .reduce(0, Integer::sum))
-            .build()
-        );
+        .map(cartItems ->
+            paymentService.getBalance(UUID.randomUUID())
+                .map(balance -> Rendering.view("cart")
+                    .modelAttribute("items", cartItems)
+                    .modelAttribute("total", cartItems.stream().map(cartItem -> cartItem.price() * cartItem.count())
+                        .reduce(0, Integer::sum))
+                    .modelAttribute("balance", balance)
+                    .build()));
   }
 
 }

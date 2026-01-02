@@ -44,7 +44,7 @@
                 </div>
             </div>
         </div>
-        <div class="row p-2">
+        <div th:if="${balance > total}" class="row p-2">
             <div class="col">
                 <form action="/cart/buy" method="post" th:if="${!items.isEmpty()}">
                     <div class="hstack gap-3">

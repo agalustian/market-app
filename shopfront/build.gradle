@@ -17,6 +17,13 @@ java {
     }
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', "$projectDir/build/generated/src/main/java"]
+        }
+    }
+}
 repositories {
     mavenCentral()
 }
@@ -61,13 +68,14 @@ tasks.register("integrationTest", Test) {
     }
 }
 
-tasks.register('buildPaymentClient', GenerateTask) {
+tasks.register("buildPaymentClient", GenerateTask) {
     generatorName.set("java")
     inputSpec.set("$projectDir/src/main/resources/payment.yaml")
     outputDir.set("$projectDir/build/generated")
-    modelPackage.set("ru.market.payment.client.domain")
-    invokerPackage.set("ru.market.payment.client")
-    apiPackage.set("ru.market.payment.client.api")
+    modelPackage.set("ru.market.shopfront.payment.domain")
+    invokerPackage.set("ru.market.shopfront.payment.client")
+    apiPackage.set("ru.market.shopfront.payment.client.api")
+    packageName.set("Payment")
     configOptions.set([
             hideGenerationTimestamp: "true",
             library                : "webclient",
@@ -77,3 +85,5 @@ tasks.register('buildPaymentClient', GenerateTask) {
             serializableModel      : "true"
     ])
 }
+
+compileJava.dependsOn tasks.buildPaymentClient
