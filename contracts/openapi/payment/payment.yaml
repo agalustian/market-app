@@ -1,0 +1,129 @@
+openapi: 3.1.0
+info:
+  title: Payment service API
+  version: 1.0.0
+  description: Сервис для проведения платежей и получения баланса денежных средств
+  contact:
+    email: "test@test.test"
+servers:
+  - url: http://localhost:9090/v1
+    description: Локальльный сервер для разработки
+paths:
+  /accounts/{accountId}/balance:
+    get:
+      tags:
+        - Balance
+      operationId: getAccountBalance
+      summary: Получить актуальный баланс на счёте пользователя
+      parameters:
+        - $ref: "#/components/parameters/accountId"
+      responses:
+        '200':
+          description: Актуальный баланс на счёте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountBalance'
+        '404':
+          description: Неизвестный аккаунт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+  /accounts/{accountId}/payment/{operationId}:
+    post:
+      operationId: executePayment
+      summary: Проведение оплаты
+      requestBody:
+        description: Количестве средств к списанию
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+      parameters:
+        - $ref: "#/components/parameters/accountId"
+        - name: operationId
+          in: path
+          required: true
+          description: Уникальный идентификатор операции оплаты
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Результат оплаты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResult'
+        '404':
+          description: Неизвестный аккаунт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResult'
+        '409':
+          description: Недостаточно средств для оплаты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResult'
+components:
+  parameters:
+    accountId:
+      in: path
+      name: accountId
+      required: true
+      description: Уникальный идентификатор пользователя
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    ErrorResult:
+      type: object
+      description: Запрос завершенный ошибкой
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Детализация ошибки
+    Amount:
+      type: object
+      description: Структура с данными о количестве денежных средств
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          description: Количество денежных средств
+    AccountBalance:
+      allOf:
+        - $ref: '#/components/schemas/Amount'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Уникальный идентификатор аккаунта
+            dateTime:
+              type: string
+              description: Дата получения баланса
+    PaymentRequest:
+      allOf:
+        - $ref: '#/components/schemas/Amount'
+        - type: object
+          properties:
+            redirectURL:
+              type: string
+              description: Адрес для переадресации после успешной оплаты
+    PaymentResult:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Статус результата оплаты
+          enum:
+            - SUCCESS
+            - FAILED
