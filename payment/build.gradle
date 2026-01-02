@@ -1,3 +1,5 @@
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 plugins {
     id "java"
     id "org.springframework.boot" version "3.5.6"
@@ -57,7 +59,7 @@ tasks.register("integrationTest", Test) {
     }
 }
 
-openApiGenerate {
+tasks.register("generatePaymentServer", GenerateTask) {
     generatorName.set("spring")
     inputSpec.set("$projectDir/src/main/resources/payment.yaml")
     outputDir.set("$projectDir/build/generated")
@@ -79,3 +81,5 @@ openApiGenerate {
             returnSuccessCode: "true"
     ])
 }
+
+compileJava.dependsOn tasks.generatePaymentServer
