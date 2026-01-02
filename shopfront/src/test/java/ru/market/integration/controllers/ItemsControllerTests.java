@@ -17,12 +17,12 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
-import ru.market.controllers.ItemsController;
-import ru.market.dto.CartAction;
-import ru.market.dto.ItemDTO;
-import ru.market.dto.ItemsSort;
-import ru.market.services.CartsService;
-import ru.market.services.ItemsService;
+import ru.market.shopfront.controllers.ItemsController;
+import ru.market.shopfront.dto.CartAction;
+import ru.market.shopfront.dto.ItemDTO;
+import ru.market.shopfront.dto.ItemsSort;
+import ru.market.shopfront.services.CartsService;
+import ru.market.shopfront.services.ItemsService;
 
 @WebFluxTest(ItemsController.class)
 class ItemsControllerTests extends BaseControllerTests {

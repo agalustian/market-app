@@ -6,9 +6,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import ru.market.dto.ItemDTO;
-import ru.market.dto.ItemsDTO;
-import ru.market.models.Item;
+import ru.market.shopfront.dto.ItemDTO;
+import ru.market.shopfront.dto.ItemsDTO;
+import ru.market.shopfront.models.Item;
 
 class ItemsDTOTests {
 

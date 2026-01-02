@@ -1,5 +1,5 @@
 services:
-  db:
+  postgres:
     image: postgres:17
     restart: always
     environment:
@@ -11,12 +11,18 @@ services:
     ports:
       - "5432:5432"
   shopfront:
-    build: ./shopfront
+    image: shopfront:latest
     restart: always
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
 
   payment:
-    build: ./payment
+    image: payment:latest
     restart: always
 
 #volumes:
 #  postgres_data:
+
+networks:
+  test:

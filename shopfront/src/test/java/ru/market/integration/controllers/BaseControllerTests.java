@@ -5,13 +5,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.market.dto.CartAction;
-import ru.market.dto.ItemDTO;
-import ru.market.dto.OrderDTO;
-import ru.market.models.CartItem;
-import ru.market.models.Item;
-import ru.market.models.Order;
-import ru.market.models.OrderItem;
+import ru.market.shopfront.dto.CartAction;
+import ru.market.shopfront.dto.ItemDTO;
+import ru.market.shopfront.dto.OrderDTO;
+import ru.market.shopfront.models.CartItem;
+import ru.market.shopfront.models.Item;
+import ru.market.shopfront.models.Order;
+import ru.market.shopfront.models.OrderItem;
 
 public class BaseControllerTests {
 

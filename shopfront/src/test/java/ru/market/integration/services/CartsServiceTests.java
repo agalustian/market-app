@@ -10,13 +10,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 import org.springframework.context.annotation.Profile;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import ru.market.dto.CartAction;
+import ru.market.shopfront.dto.CartAction;
 import ru.market.integration.PostgreSQLTestContainer;
-import ru.market.models.CartItem;
-import ru.market.models.Item;
-import ru.market.repositories.CartItemsRepository;
-import ru.market.repositories.ItemsRepository;
-import ru.market.services.CartsService;
+import ru.market.shopfront.models.CartItem;
+import ru.market.shopfront.models.Item;
+import ru.market.shopfront.repositories.CartItemsRepository;
+import ru.market.shopfront.repositories.ItemsRepository;
+import ru.market.shopfront.services.CartsService;
 
 @SpringBootTest
 @Testcontainers

@@ -4,8 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import ru.market.models.Order;
-import ru.market.models.CartItem;
+import ru.market.shopfront.models.Order;
+import ru.market.shopfront.models.CartItem;
 
 class OrderTests {
 

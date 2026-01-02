@@ -9,8 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
-import ru.market.controllers.OrdersController;
-import ru.market.services.OrdersService;
+import ru.market.shopfront.controllers.OrdersController;
+import ru.market.shopfront.services.OrdersService;
 
 @WebFluxTest(OrdersController.class)
 class OrdersControllerTests extends BaseControllerTests {
