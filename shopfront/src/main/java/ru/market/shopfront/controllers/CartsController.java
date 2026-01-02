@@ -3,6 +3,7 @@ package ru.market.shopfront.controllers;
 import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,8 @@ public class CartsController {
 
   // TODO for test
   private static final Integer CART_ID = 999;
+
+  private static final String CART_VIEW = "cart";
 
   private final CartsService cartsService;
 
@@ -41,7 +44,8 @@ public class CartsController {
             orderDTO ->
                 Rendering.redirectTo("/orders/" + orderDTO.id() + "?newOrder=true").build()
         )
-        .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()));
+        .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()))
+        .onErrorResume(err -> getCartItemsView(CART_ID, err.getMessage()));
   }
 
   @PostMapping(value = "/items", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
@@ -51,15 +55,20 @@ public class CartsController {
   }
 
   private Mono<Rendering> getCartItemsView(final Integer cartId) {
+    return getCartItemsView(cartId, "");
+  }
+
+  private Mono<Rendering> getCartItemsView(final Integer cartId, String errorMessage) {
     return cartsService.getCart(cartId)
         .collectList()
-        .map(cartItems ->
+        .flatMap(cartItems ->
             paymentService.getBalance(UUID.randomUUID())
-                .map(balance -> Rendering.view("cart")
+                .map(balance -> Rendering.view(CART_VIEW)
                     .modelAttribute("items", cartItems)
                     .modelAttribute("total", cartItems.stream().map(cartItem -> cartItem.price() * cartItem.count())
                         .reduce(0, Integer::sum))
                     .modelAttribute("balance", balance)
+                    .modelAttribute("errorMessage", errorMessage)
                     .build()));
   }
 

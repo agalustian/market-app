@@ -61,7 +61,6 @@ openApiGenerate {
     generatorName.set("spring")
     inputSpec.set("$projectDir/src/main/resources/payment.yaml")
     outputDir.set("$projectDir/build/generated")
-//    ignoreFileOverride.set(".openapi-generator-java-sources.ignore")
     modelPackage.set("ru.market.payment.server.domain")
     invokerPackage.set("ru.market.payment.server")
     apiPackage.set("ru.market.payment.server.api")
