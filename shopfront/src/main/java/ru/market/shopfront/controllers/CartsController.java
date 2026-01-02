@@ -3,7 +3,6 @@ package ru.market.shopfront.controllers;
 import java.util.UUID;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.reactive.result.view.Rendering;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.dto.AddRemoveToCartRequest;
+import ru.market.shopfront.exceptions.PaymentException;
+import ru.market.shopfront.payment.domain.PaymentResult;
 import ru.market.shopfront.services.CartsService;
 import ru.market.shopfront.services.PaymentService;
 
@@ -40,12 +41,22 @@ public class CartsController {
   @PostMapping("/buy")
   public Mono<Rendering> buy() {
     return cartsService.buy(CART_ID)
-        .map(
-            orderDTO ->
-                Rendering.redirectTo("/orders/" + orderDTO.id() + "?newOrder=true").build()
-        )
-        .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()))
-        .onErrorResume(err -> getCartItemsView(CART_ID, err.getMessage()));
+        .flatMap(
+            orderDTO -> {
+              // This is not optimal decision, not transaction fail safe!
+              return paymentService.chargePayment(UUID.randomUUID(), UUID.randomUUID(), orderDTO.totalSum())
+                  .flatMap(paymentResult -> {
+                        if (paymentResult.getStatus() != PaymentResult.StatusEnum.SUCCESS) {
+                          // TODO use multilanguage
+                          return Mono.error(new PaymentException("Ошибка оплаты, статус: " + paymentResult.getStatus()));
+                        }
+
+                        return Mono.just(Rendering.redirectTo("/orders/" + orderDTO.id() + "?newOrder=true").build());
+                      }
+                  )
+                  .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()))
+                  .onErrorResume(err -> getCartItemsView(CART_ID, err.getMessage()));
+            });
   }
 
   @PostMapping(value = "/items", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)

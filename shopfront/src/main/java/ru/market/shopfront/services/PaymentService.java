@@ -2,18 +2,22 @@ package ru.market.shopfront.services;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.payment.client.api.DefaultApi;
 import ru.market.shopfront.payment.domain.AccountBalance;
 import ru.market.shopfront.payment.domain.PaymentRequest;
 import ru.market.shopfront.payment.domain.PaymentResult;
 
-@Component
+@Service
 public class PaymentService {
 
   // TODO how to rename DefaultApi -> Payment[Api/Client]?
-  private final DefaultApi paymentApiClient = new DefaultApi();
+  private final DefaultApi paymentApiClient;
+
+  public PaymentService(DefaultApi paymentApiClient) {
+    this.paymentApiClient = paymentApiClient;
+  }
 
   public Mono<PaymentResult> chargePayment(UUID accountId, UUID operationId, Integer amount) {
     var paymentRequest = new PaymentRequest();

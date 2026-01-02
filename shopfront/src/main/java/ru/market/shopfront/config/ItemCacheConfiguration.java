@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCust
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import ru.market.shopfront.dto.ItemDTO;
+import ru.market.shopfront.models.Item;
 
 @Configuration
 public class ItemCacheConfiguration {
@@ -22,17 +22,19 @@ public class ItemCacheConfiguration {
     cacheObjectMapper.activateDefaultTyping(cacheObjectMapper.getPolymorphicTypeValidator(),
         ObjectMapper.DefaultTyping.NON_FINAL,
         PROPERTY);
-    Jackson2JsonRedisSerializer<ItemDTO> itemSerializer =
-        new Jackson2JsonRedisSerializer<>(cacheObjectMapper, ItemDTO.class);
+    Jackson2JsonRedisSerializer<Item> itemSerializer =
+        new Jackson2JsonRedisSerializer<>(cacheObjectMapper, Item.class);
 
-    Jackson2JsonRedisSerializer<ItemDTO[]> itemsSerializer =
-        new Jackson2JsonRedisSerializer<>(cacheObjectMapper, ItemDTO[].class);
+    Jackson2JsonRedisSerializer<Item[]> itemsSerializer =
+        new Jackson2JsonRedisSerializer<>(cacheObjectMapper, Item[].class);
 
     return builder -> builder.cacheDefaults(defaultCacheConfig()
         .serializeValuesWith(fromSerializer(itemSerializer))
+        .disableCachingNullValues()
         .entryTtl(Duration.of(30, ChronoUnit.SECONDS)))
         .withCacheConfiguration("items", defaultCacheConfig()
             .serializeValuesWith(fromSerializer(itemsSerializer))
+            .disableCachingNullValues()
             .entryTtl(Duration.of(60, ChronoUnit.SECONDS)));
   }
 
