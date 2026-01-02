@@ -1,55 +1,37 @@
 package ru.market.models;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
-@Table(name = "orders")
+@Table("orders")
 public class Order {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Integer id;
 
-  @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.LAZY)
-  @JoinColumn(name = "order_id")
-  private List<OrderItem> orderItems = new ArrayList<>();
-
-  @Column(name = "total_sum")
+  @Column("total_sum")
   private Integer totalSum;
 
   protected Order() {
   }
 
-  public Order(List<OrderItem> orderItems, Integer totalSum) {
-    this.orderItems = orderItems;
+  public Order(Integer totalSum) {
     this.totalSum = totalSum;
   }
 
-  public static Order from(Cart cart) {
-    List<OrderItem> orderItems = cart.getCartItems().stream().map(
-        cartItem -> OrderItem.from(cartItem, cartItem.getCount())).toList();
+  public static Order from(List<CartItem> cartItems) {
+    Integer totalSum = cartItems.stream()
+        .map(cartItem -> cartItem.getPrice() * cartItem.getCount())
+        .reduce(0, Integer::sum);
 
-    return new Order(orderItems, cart.getTotalSum());
+    return new Order(totalSum);
   }
 
   public Integer getId() {
     return id;
-  }
-
-  public List<OrderItem> getOrderItems() {
-    return orderItems;
   }
 
   public Integer getTotalSum() {

@@ -1,95 +1,129 @@
 package ru.market.services;
 
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.market.dto.ItemDTO;
 import ru.market.dto.ItemsSort;
 import ru.market.models.CartItem;
 import ru.market.models.Image;
-import ru.market.models.Item;
-import ru.market.repositories.CartItemsJpaRepository;
-import ru.market.repositories.ImagesJpaRepository;
-import ru.market.repositories.ItemsJpaRepository;
+import ru.market.repositories.CartItemsRepository;
+import ru.market.repositories.ImagesRepository;
+import ru.market.repositories.ItemsRepository;
 
 @Service
 public class ItemsService {
   private static final Integer CART_ID = 999;
 
-  private final ItemsJpaRepository itemsRepository;
+  private static final Integer MAX_BYTES = 5 * 1024 * 1024;
 
-  private final CartItemsJpaRepository cartItemsRepository;
+  private final ItemsRepository itemsRepository;
 
-  private final ImagesJpaRepository imagesRepository;
+  private final CartItemsRepository cartItemsRepository;
 
-  public ItemsService(ItemsJpaRepository itemsRepository, CartItemsJpaRepository cartItemsRepository,
-                      ImagesJpaRepository imagesRepository) {
+  private final ImagesRepository imagesRepository;
+
+  public ItemsService(ItemsRepository itemsRepository,
+                      CartItemsRepository cartItemsRepository,
+                      ImagesRepository imagesRepository) {
     this.itemsRepository = itemsRepository;
     this.cartItemsRepository = cartItemsRepository;
     this.imagesRepository = imagesRepository;
   }
 
-  public Item getItemById(final Integer itemId) {
-    Item item = itemsRepository.getItemById(itemId);
-    CartItem cartItem = cartItemsRepository.getCartItemByCartIdAndItem_Id(CART_ID, itemId);
+  public Mono<ItemDTO> getItemById(final Integer itemId) {
+    return itemsRepository.findById(itemId)
+        .flatMap(item -> cartItemsRepository.findByCartIdAndItemId(CART_ID, itemId)
+            .map(CartItem::getCount)
+            .defaultIfEmpty(0)
+            .map(count -> {
+              item.setCount(count);
 
-    item.setCount(cartItem != null ? cartItem.getCount() : 0);
-
-    return item;
+              return item;
+            })
+        ).map(ItemDTO::from);
   }
 
-  public List<Item> search(final String search, ItemsSort sort, PageRequest pageRequest) {
-    List<Item> items =
-        itemsRepository.findItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search,
-            pageRequest.withSort(Sort.by(getSortField(sort)).ascending()));
+  public Flux<ItemDTO> search(final String search, ItemsSort sort, PageRequest pageRequest) {
+    return itemsRepository.findItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search,
+            pageRequest.withSort(Sort.by(getSortField(sort)).ascending()))
+        .map(item ->
+            cartItemsRepository.findByCartIdAndItemId(CART_ID, item.getId())
+                .map(CartItem::getCount)
+                .defaultIfEmpty(0)
+                .map(count -> {
+                  item.setCount(count);
 
-    if (items.isEmpty()) {
-      return items;
-    }
-
-    var cartItemsCount =
-        cartItemsRepository.getCartItemsByItemIdInAndCartId(items.stream().map(Item::getId).toList(), CART_ID).stream()
-            .collect(
-                Collectors.toMap((cartItem) -> cartItem.getItem().getId(), CartItem::getCount)
-            );
-
-    for (Item item : items) {
-      item.setCount(cartItemsCount.get(item.getId()));
-    }
-
-    return items;
+                  return item;
+                })
+        ).flatMap(el -> el.map(ItemDTO::from));
   }
 
-  public Integer searchCount(final String search) {
+  public Mono<Integer> searchCount(final String search) {
     return itemsRepository.countItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search);
   }
 
   @Transactional
-  public Item saveItemImage(final Integer itemId, byte[] image) {
+  public Mono<ItemDTO> saveItemImage(final Integer itemId, FilePart image) {
     Assert.notNull(itemId, "Item id is required for getting image");
-    Item item = itemsRepository.getItemById(itemId);
 
-    if (item == null) {
-      throw new NoSuchElementException("Item with such id not exists");
+
+    MediaType contentType = image.headers().getContentType();
+    if (contentType == null || !"image".equalsIgnoreCase(contentType.getType())) {
+      return Mono.error(new IllegalArgumentException("Нужен файл изображения"));
     }
 
-    imagesRepository.save(new Image(itemId, image)).getContent();
+    return DataBufferUtils.join(image.content())
+        .flatMap(dataBuffer -> {
+          try {
+            int readable = dataBuffer.readableByteCount();
+            if (readable <= 0) {
+              return Mono.error(new IllegalStateException("Пустой файл"));
+            }
+            if (readable > MAX_BYTES) {
+              return Mono.error(new IllegalArgumentException("Слишком большой файл"));
+            }
 
-    item.setImgPath("/image/" + itemId);
+            byte[] imageBytes = new byte[readable];
 
-    itemsRepository.save(item);
+            dataBuffer.read(imageBytes);
 
-    return item;
+            return itemsRepository.findById(itemId)
+                .switchIfEmpty(Mono.error(new NoSuchElementException("Item with such id not exists")))
+                .flatMap(item -> imagesRepository.findById(itemId)
+                    .flatMap(existing -> {
+                      existing.setNewAggregate(false);
+                      return imagesRepository.save(existing);
+                    })
+                    .switchIfEmpty(Mono.defer(() -> {
+                      Image newImage = new Image(itemId, imageBytes);
+                      newImage.setNewAggregate(true);
+                      return imagesRepository.save(newImage);
+                    }))
+                    .flatMap(upsertedImage -> {
+                      item.setImgPath("/image/" + upsertedImage.getId());
+
+                      return itemsRepository.save(item).map(ItemDTO::from);
+                    })
+                );
+          } finally {
+            DataBufferUtils.release(dataBuffer);
+          }
+        });
   }
 
-  public byte[] getItemImage(final Integer itemId) {
+  public Mono<byte[]> getItemImage(final Integer itemId) {
     Assert.notNull(itemId, "Item id is required for getting image");
 
-    return imagesRepository.getImageById(itemId).getContent();
+    return imagesRepository.findById(itemId).map(Image::getContent);
   }
 
   private String getSortField(ItemsSort sort) {

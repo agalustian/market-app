@@ -1,87 +1,69 @@
 package ru.market.services;
 
-import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import ru.market.dto.CartAction;
-import ru.market.models.Cart;
+import ru.market.dto.ItemDTO;
+import ru.market.dto.OrderDTO;
 import ru.market.models.CartItem;
-import ru.market.models.Item;
 import ru.market.models.Order;
-import ru.market.repositories.CartsJpaRepository;
-import ru.market.repositories.ItemsJpaRepository;
-import ru.market.repositories.OrdersJpaRepository;
+import ru.market.models.OrderItem;
+import ru.market.repositories.CartItemsRepository;
+import ru.market.repositories.OrderItemsRepository;
+import ru.market.repositories.OrdersRepository;
 
 @Service
 public class CartsService {
 
-  private final CartsJpaRepository cartsRepository;
+  private final CartItemsRepository cartItemsRepository;
 
-  private final OrdersJpaRepository orderRepository;
+  private final OrdersRepository orderRepository;
 
-  private final ItemsJpaRepository itemsJpaRepository;
+  private final OrderItemsRepository orderItemsRepository;
 
   @Autowired
-  public CartsService(CartsJpaRepository cartsRepository, OrdersJpaRepository orderRepository,
-                      ItemsJpaRepository itemsJpaRepository) {
-    this.cartsRepository = cartsRepository;
+  public CartsService(CartItemsRepository cartItemsRepository, OrdersRepository orderRepository,
+                      OrderItemsRepository orderItemsRepository) {
+    this.cartItemsRepository = cartItemsRepository;
     this.orderRepository = orderRepository;
-    this.itemsJpaRepository = itemsJpaRepository;
+    this.orderItemsRepository = orderItemsRepository;
   }
 
-  public Cart getCart(final Integer cartId) {
-    return cartsRepository.findCartById(cartId);
+  public Flux<ItemDTO> getCart(final Integer cartId) {
+    return cartItemsRepository.findCartItems(cartId).map(ItemDTO::from);
   }
 
-  @Transactional
-  public Cart addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
-    Cart cart = cartsRepository.getCartById(cartId);
-    CartItem cartItem = getOrCreateCartItem(cart, itemId);
-
-    switch (cartAction) {
-      case PLUS -> cartItem.incrementCount();
-      case MINUS -> cartItem.decrementCount();
-      case DELETE -> cart.getCartItems().remove(cartItem);
-    }
-
-    cartsRepository.save(cart);
-
-    return cart;
+  public Mono<Void> addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
+    return getOrCreateCartItem(cartId, itemId).flatMap(cartItem -> switch (cartAction) {
+      case PLUS -> cartItemsRepository.incrementCountById(cartItem.getId());
+      case MINUS -> cartItemsRepository.decrementCountById(cartItem.getId());
+      case DELETE -> cartItemsRepository.deleteById(cartItem.getId());
+    });
   }
 
-  private CartItem getOrCreateCartItem(Cart cart, Integer itemId) {
-    var cartItem = cart.getCartItems().stream()
-        .filter(item -> Objects.equals(item.getItem().getId(), itemId))
-        .toList();
-
-    if (cartItem.isEmpty()) {
-      Item item = itemsJpaRepository.getItemById(itemId);
-      var newCartItem = new CartItem(cart.getId(), item, 0);
-
-      cart.getCartItems().add(newCartItem);
-
-      return newCartItem;
-    }
-
-    return cartItem.getFirst();
+  private Mono<CartItem> getOrCreateCartItem(Integer cartId, Integer itemId) {
+    return cartItemsRepository.findByCartIdAndItemId(cartId, itemId)
+        .switchIfEmpty(cartItemsRepository.save(new CartItem(cartId, itemId, 0)));
   }
 
   @Transactional
-  public Order buy(final Integer cartId) {
-    Cart cart = cartsRepository.getCartById(cartId);
+  public Mono<OrderDTO> buy(final Integer cartId) {
+    return cartItemsRepository.findCartItems(cartId).collectList()
+        .flatMap(cartItems ->
+            orderRepository.save(Order.from(cartItems))
+                .flatMap(order -> {
+                      var orderItems = cartItems.stream().map(
+                          cartItem -> OrderItem.from(order.getId(), cartItem, cartItem.getCount())).toList();
 
-    if (cart == null) {
-      return null;
-    }
-
-    Order order = orderRepository.save(Order.from(cart));
-
-    cart.getCartItems().removeAll(cart.getCartItems());
-
-    cartsRepository.save(cart);
-
-    return order;
+                      return orderItemsRepository.saveAll(orderItems)
+                          .then(cartItemsRepository.deleteAllByCartId(cartId))
+                          .then(Mono.just(OrderDTO.from(order, orderItems)));
+                    }
+                )
+        );
   }
 
 }

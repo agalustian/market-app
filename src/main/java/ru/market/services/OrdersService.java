@@ -1,25 +1,40 @@
 package ru.market.services;
 
-import java.util.List;
 import org.springframework.stereotype.Service;
-import ru.market.models.Order;
-import ru.market.repositories.OrdersJpaRepository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import ru.market.dto.OrderDTO;
+import ru.market.repositories.OrderItemsRepository;
+import ru.market.repositories.OrdersRepository;
 
 @Service
 public class OrdersService {
 
-  private final OrdersJpaRepository ordersRepository;
+  private final OrdersRepository ordersRepository;
 
-  public OrdersService(final OrdersJpaRepository ordersRepository) {
+  private final OrderItemsRepository orderItemsRepository;
+
+  public OrdersService(final OrdersRepository ordersRepository, OrderItemsRepository orderItemsRepository) {
     this.ordersRepository = ordersRepository;
+    this.orderItemsRepository = orderItemsRepository;
   }
 
-  public List<Order> getOrders() {
-    return ordersRepository.findAll();
+  public Flux<OrderDTO> getOrders() {
+    return ordersRepository.findAll().flatMap(order ->
+        orderItemsRepository
+            .findAllByOrderId(order.getId())
+            .collectList()
+            .map(orderItems -> OrderDTO.from(order, orderItems))
+    );
   }
 
-  public Order getOrder(final Integer id) {
-    return ordersRepository.findById(id).orElse(null);
+  public Mono<OrderDTO> getOrder(final Integer id) {
+    return ordersRepository.findById(id).flatMap(order ->
+        orderItemsRepository
+            .findAllByOrderId(order.getId())
+            .collectList()
+            .map(orderItems -> OrderDTO.from(order, orderItems))
+    );
   }
 
 }

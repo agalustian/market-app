@@ -2,11 +2,10 @@ package ru.market.dto;
 
 import java.util.ArrayList;
 import java.util.List;
-import ru.market.models.Item;
 
 public record ItemsDTO(List<List<ItemDTO>> items) {
 
-  public static ItemsDTO from(List<Item> items, Integer chunkSize) {
+  public static ItemsDTO from(List<ItemDTO> items, Integer chunkSize) {
     if (items.isEmpty()) {
       return new ItemsDTO(List.of(fillEmptyDTO(new ArrayList<>(), chunkSize)));
     }
@@ -20,8 +19,8 @@ public record ItemsDTO(List<List<ItemDTO>> items) {
     return new ItemsDTO(lists);
   }
 
-  private static List<ItemDTO> getSubList(List<Item> items, Integer index, Integer chunkSize) {
-    var subList = items.subList(index, Math.min(index + chunkSize, items.size())).stream().map(ItemDTO::from).toList();
+  private static List<ItemDTO> getSubList(List<ItemDTO> items, Integer index, Integer chunkSize) {
+    var subList = items.subList(index, Math.min(index + chunkSize, items.size())).stream().toList();
 
     return subList.size() == chunkSize ? subList : fillEmptyDTO(subList, chunkSize);
   }
