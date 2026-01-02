@@ -10,10 +10,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import ru.market.shopfront.controllers.OrdersController;
+import ru.market.shopfront.integration.FixturesGenerator;
 import ru.market.shopfront.services.OrdersService;
 
 @WebFluxTest(OrdersController.class)
-class OrdersControllerTests extends BaseControllerTests {
+class OrdersControllerTests {
 
   @Autowired
   private WebTestClient webTestClient;
@@ -23,7 +24,7 @@ class OrdersControllerTests extends BaseControllerTests {
 
   @Test
   void shouldGetOrderById() {
-    when(ordersService.getOrder(1)).thenReturn(generateOrderDTO());
+    when(ordersService.getOrder(1)).thenReturn(FixturesGenerator.generateOrderDTO());
 
     webTestClient.get()
         .uri("/orders/1")
@@ -38,7 +39,7 @@ class OrdersControllerTests extends BaseControllerTests {
 
   @Test
   void shouldGetOrders() {
-    when(ordersService.getOrders()).thenReturn(Flux.just(generateOrderDTO().block(), generateOrderDTO().block()));
+    when(ordersService.getOrders()).thenReturn(Flux.just(FixturesGenerator.generateOrderDTO().block(), FixturesGenerator.generateOrderDTO().block()));
 
     webTestClient.get()
         .uri("/orders")

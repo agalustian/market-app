@@ -98,11 +98,6 @@ components:
           type: number
           description: Количество денежных средств
           example: 15000
-    #      discriminator:
-    #        propertyName: amount
-    #        mapping:
-    #          accountBalance: '#/components/schemas/AccountBalance'
-    #          paymentRequest: '#/components/schemas/PaymentRequest'
     AccountBalance:
       allOf:
         - $ref: "#/components/schemas/Amount"

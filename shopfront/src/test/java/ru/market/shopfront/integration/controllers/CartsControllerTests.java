@@ -19,13 +19,14 @@ import reactor.core.publisher.Mono;
 import ru.market.shopfront.controllers.CartsController;
 import ru.market.shopfront.dto.CartAction;
 import ru.market.shopfront.dto.OrderDTO;
+import ru.market.shopfront.integration.FixturesGenerator;
 import ru.market.shopfront.models.Order;
 import ru.market.shopfront.payment.domain.PaymentResult;
 import ru.market.shopfront.services.CartsService;
 import ru.market.shopfront.services.PaymentService;
 
 @WebFluxTest(CartsController.class)
-class CartsControllerTests extends BaseControllerTests {
+class CartsControllerTests {
 
   @Autowired
   private WebTestClient webTestClient;
@@ -38,7 +39,7 @@ class CartsControllerTests extends BaseControllerTests {
 
   @Test
   void shouldGetCartItems() {
-    when(cartsService.getCart(999)).thenReturn(generateItemDTO());
+    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
     webTestClient.get()
@@ -55,7 +56,7 @@ class CartsControllerTests extends BaseControllerTests {
 
   @Test
   void shouldNotContainBuyButtonOnEmptyBalance() {
-    when(cartsService.getCart(999)).thenReturn(generateItemDTO());
+    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(0));
 
     webTestClient.get()
@@ -74,7 +75,7 @@ class CartsControllerTests extends BaseControllerTests {
   void shouldBuyCartItems() {
     when(cartsService.buy(999))
         .thenReturn(Mono.just(
-                OrderDTO.from(new Order(1111), Objects.requireNonNull(generateOrderItems().collectList().block()))
+                OrderDTO.from(new Order(1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
             )
         );
     var paymentResult = new PaymentResult();
@@ -91,13 +92,13 @@ class CartsControllerTests extends BaseControllerTests {
   void shouldReturnPaymentErrorOnBuying() {
     when(cartsService.buy(999))
         .thenReturn(Mono.just(
-                OrderDTO.from(new Order(1111), Objects.requireNonNull(generateOrderItems().collectList().block()))
+                OrderDTO.from(new Order(1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
             )
         );
     var paymentResult = new PaymentResult();
     paymentResult.setStatus(PaymentResult.StatusEnum.FAILED);
     when(paymentService.chargePayment(any(UUID.class), any(UUID.class), any(Integer.class))).thenReturn(Mono.just(paymentResult));
-    when(cartsService.getCart(999)).thenReturn(generateItemDTO());
+    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
     webTestClient.post()
@@ -118,14 +119,14 @@ class CartsControllerTests extends BaseControllerTests {
     @EnumSource(CartAction.class)
     void shouldAddRemoveItemToCart(CartAction action) {
       when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(cartsService.getCart(999)).thenReturn(generateItemDTO());
+      when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
       when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
 
       webTestClient.post()
           .uri("/cart/items")
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(BodyInserters.fromFormData(generateAddRemoveToCartBody(action)))
+          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
           .exchange()
           .expectStatus().is2xxSuccessful()
           .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)

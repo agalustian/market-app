@@ -21,11 +21,12 @@ import ru.market.shopfront.controllers.ItemsController;
 import ru.market.shopfront.dto.CartAction;
 import ru.market.shopfront.dto.ItemDTO;
 import ru.market.shopfront.dto.ItemsSort;
+import ru.market.shopfront.integration.FixturesGenerator;
 import ru.market.shopfront.services.CartsService;
 import ru.market.shopfront.services.ItemsService;
 
 @WebFluxTest(ItemsController.class)
-class ItemsControllerTests extends BaseControllerTests {
+class ItemsControllerTests {
 
   @Autowired
   private WebTestClient webTestClient;
@@ -39,7 +40,7 @@ class ItemsControllerTests extends BaseControllerTests {
   @Test
   void shouldSearchItems() {
     when(itemsService.search(eq("test"), eq(ItemsSort.NO), any(PageRequest.class))).thenReturn(
-        generateItems().map(ItemDTO::from));
+        FixturesGenerator.generateItems().map(ItemDTO::from));
     when(itemsService.searchCount(eq("test"))).thenReturn(Mono.just(5));
 
     webTestClient.get()
@@ -59,7 +60,7 @@ class ItemsControllerTests extends BaseControllerTests {
 
   @Test
   void shouldGetItemById() {
-    when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(generateItemDTO().blockFirst())));
+    when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
 
     webTestClient.get()
         .uri("/items/1")
@@ -82,12 +83,12 @@ class ItemsControllerTests extends BaseControllerTests {
     @EnumSource(CartAction.class)
     void shouldAddRemoveItemToCart(CartAction action) {
       when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(cartsService.getCart(999)).thenReturn(generateItemDTO());
+      when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
 
       webTestClient.post()
           .uri("/items?" + ACTUAL_URL_PARAMS)
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(BodyInserters.fromFormData(generateAddRemoveToCartBody(action)))
+          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
           .exchange()
           .expectStatus().is3xxRedirection();
     }
@@ -102,12 +103,12 @@ class ItemsControllerTests extends BaseControllerTests {
     @EnumSource(CartAction.class)
     void shouldAddRemoveItemToCart(CartAction action) {
       when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(generateItemDTO().blockFirst())));
+      when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
 
       var responseSpec = webTestClient.post()
           .uri("/items/1")
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(BodyInserters.fromFormData(generateAddRemoveToCartBody(action)))
+          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
           .exchange();
 
       switch (action) {
