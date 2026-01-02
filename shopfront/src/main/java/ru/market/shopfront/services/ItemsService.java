@@ -1,6 +1,7 @@
 package ru.market.shopfront.services;
 
 import java.util.NoSuchElementException;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -39,6 +40,7 @@ public class ItemsService {
     this.imagesRepository = imagesRepository;
   }
 
+  @Cacheable("item")
   public Mono<ItemDTO> getItemById(final Integer itemId) {
     return itemsRepository.findById(itemId)
         .flatMap(item -> cartItemsRepository.findByCartIdAndItemId(CART_ID, itemId)
@@ -52,6 +54,7 @@ public class ItemsService {
         ).map(ItemDTO::from);
   }
 
+  @Cacheable("items")
   public Flux<ItemDTO> search(final String search, ItemsSort sort, PageRequest pageRequest) {
     return itemsRepository.findItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search,
             pageRequest.withSort(Sort.by(getSortField(sort)).ascending()))

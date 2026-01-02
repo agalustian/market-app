@@ -41,7 +41,7 @@ public class Item {
     this.imgPath = imgPath;
   }
 
-  protected Item() {
+  public Item() {
   }
 
   public Integer getId() {
