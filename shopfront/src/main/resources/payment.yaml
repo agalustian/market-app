@@ -11,8 +11,6 @@ servers:
 paths:
   /accounts/{accountId}/balance:
     get:
-      tags:
-        - Balance
       operationId: getAccountBalance
       summary: Получить актуальный баланс на счёте пользователя
       parameters:

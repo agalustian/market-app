@@ -1,7 +1,10 @@
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.6'
     id 'io.spring.dependency-management' version '1.1.7'
+    id "org.openapi.generator" version "7.12.0"
 }
 
 group = 'ru.market'
@@ -55,4 +58,21 @@ tasks.register("integrationTest", Test) {
     testLogging {
         events "passed", "skipped", "failed"
     }
+}
+
+tasks.register('buildPaymentClient', GenerateTask) {
+    generatorName.set("java")
+    inputSpec.set("$projectDir/src/main/resources/payment.yaml")
+    outputDir.set("$projectDir/build/generated")
+    modelPackage.set("ru.market.payment.client.domain")
+    invokerPackage.set("ru.market.payment.client")
+    apiPackage.set("ru.market.payment.client.api")
+    configOptions.set([
+            hideGenerationTimestamp: "true",
+            library                : "webclient",
+            useJakartaEe           : "true",
+            useTags                : "true",
+            openApiNullable        : "false",
+            serializableModel      : "true"
+    ])
 }
