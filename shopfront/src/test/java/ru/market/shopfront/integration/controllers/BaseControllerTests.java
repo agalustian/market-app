@@ -1,4 +1,4 @@
-package ru.market.integration.controllers;
+package ru.market.shopfront.integration.controllers;
 
 import java.util.Objects;
 import org.springframework.util.LinkedMultiValueMap;

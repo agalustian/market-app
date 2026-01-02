@@ -1,4 +1,4 @@
-package ru.market.integration;
+package ru.market.shopfront.integration;
 
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.PostgreSQLContainer;

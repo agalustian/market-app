@@ -1,4 +1,4 @@
-package ru.market.integration.services;
+package ru.market.shopfront.integration.services;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import ru.market.integration.PostgreSQLTestContainer;
+import ru.market.shopfront.integration.PostgreSQLTestContainer;
 
 @SpringBootTest
 @Testcontainers

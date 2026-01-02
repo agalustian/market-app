@@ -1,4 +1,4 @@
-package ru.market.integration.controllers;
+package ru.market.shopfront.integration.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

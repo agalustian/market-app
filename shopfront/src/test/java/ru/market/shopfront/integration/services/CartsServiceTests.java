@@ -1,22 +1,24 @@
-package ru.market.integration.services;
+package ru.market.shopfront.integration.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.context.ImportTestcontainers;
 import org.springframework.context.annotation.Profile;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.market.shopfront.dto.CartAction;
-import ru.market.integration.PostgreSQLTestContainer;
+import ru.market.shopfront.integration.PostgreSQLTestContainer;
 import ru.market.shopfront.models.CartItem;
 import ru.market.shopfront.models.Item;
 import ru.market.shopfront.repositories.CartItemsRepository;
 import ru.market.shopfront.repositories.ItemsRepository;
 import ru.market.shopfront.services.CartsService;
+import ru.market.shopfront.services.PaymentService;
 
 @SpringBootTest
 @Testcontainers
@@ -32,6 +34,8 @@ class CartsServiceTests {
 
   @Autowired
   private ItemsRepository itemsRepository;
+
+  private final PaymentService paymentService = Mockito.mock(PaymentService.class);
 
   @BeforeEach
   void prepare() {

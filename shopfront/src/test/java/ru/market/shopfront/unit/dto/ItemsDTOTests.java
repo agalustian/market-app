@@ -1,4 +1,4 @@
-package ru.market.unit.dto;
+package ru.market.shopfront.unit.dto;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
