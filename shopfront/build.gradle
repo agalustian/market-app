@@ -6,7 +6,7 @@ plugins {
 
 group = 'ru.market'
 version = '0.0.1'
-description = 'Market application'
+description = 'Shopfront application'
 
 java {
     toolchain {

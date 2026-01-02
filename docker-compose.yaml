@@ -10,6 +10,13 @@ services:
 #      - postgres_data:/var/lib/postgresql/data # Persist data in a named volume
     ports:
       - "5432:5432"
+  shopfront:
+    build: ./shopfront
+    restart: always
+
+  payment:
+    build: ./payment
+    restart: always
 
 #volumes:
 #  postgres_data:
