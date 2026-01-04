@@ -1,0 +1,91 @@
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id "org.openapi.generator" version "7.12.0"
+}
+
+group = 'ru.market'
+version = '0.0.1'
+description = 'Shopfront application'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', "$projectDir/build/generated/src/main/java"]
+        }
+    }
+}
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter-data-r2dbc"
+    implementation "org.springframework.boot:spring-boot-starter-data-redis-reactive"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.springframework.boot:spring-boot-starter-webflux"
+    implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13"
+
+    runtimeOnly "org.postgresql:r2dbc-postgresql"
+
+    testImplementation "org.springframework.boot:spring-boot-testcontainers"
+    testImplementation "org.testcontainers:postgresql"
+    testImplementation "com.redis:testcontainers-redis"
+    testImplementation "org.testcontainers:r2dbc"
+    testImplementation "org.testcontainers:junit-jupiter"
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("io.projectreactor:reactor-test")
+
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        filter {
+            exclude('**/integration/**')
+        }
+    }
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+tasks.register("integrationTest", Test) {
+    useJUnitPlatform {
+        filter {
+            include('**/integration/**')
+        }
+    }
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+tasks.register("buildPaymentClient", GenerateTask) {
+    generatorName.set("java")
+    inputSpec.set("$projectDir/src/main/resources/payment.yaml")
+    outputDir.set("$projectDir/build/generated")
+    modelPackage.set("ru.market.shopfront.payment.domain")
+    invokerPackage.set("ru.market.shopfront.payment.client")
+    apiPackage.set("ru.market.shopfront.payment.client.api")
+    packageName.set("Payment")
+    configOptions.set([
+            hideGenerationTimestamp: "true",
+            library                : "webclient",
+            useJakartaEe           : "true",
+            useTags                : "true",
+            openApiNullable        : "false",
+            serializableModel      : "true"
+    ])
+}
+
+compileJava.dependsOn tasks.buildPaymentClient

@@ -42,27 +42,33 @@ Project use `MVC` architecture
 - Moving to `SPA` instead of templates.
 
 ## Project structure
-- controllers - for HTTP requests
-- models - as business model unit
-- services - as business models orchestrator
-- repositories - as layer for database encapsulation
-- resources/templates - view templates
+Multimodule concept.
+
+#### Payment module
+  - generated via openapi spec (contracts -> openapi -> payment.yaml)
+#### Shopfront module
+  - controllers - for HTTP requests
+  - models - as business model unit
+  - services - as business models orchestrator
+  - repositories - as layer for database encapsulation
+  - resources/templates - view templates
 
 ## Usefull commands
 
-Run unit tests: `./gradlew test`
+Run unit tests: `sh ./gradlew test`
 
-Run integration tests: `./gradlew integrationTest`
+Run integration tests: `sh  ./gradlew integrationTest`
 
-Build jar: `./gradlew build` - path `build/libs/market-0.0.1.jar`
+Build jar: `sh  ./gradlew build` - path `build/libs/[payment|shopfront]-0.0.1.jar`
 
-Build Dockerfile:  `sh ./gradlew build && docker build -t market:test .`
+Build Dockerfile (in each module):  `cd ./shopfront && sh ./gradlew build && docker build -t shopfront:latest . && cd ..`
 
-Run docker container: `docker run -p 8090:8090 market:test`
+Run shopfront docker container: `docker run -p 8081:8081 shopfront:latest`
+Run payment docker container: `docker run -p 8080:8080 shopfront:latest`
 
-Run postgres: `docker compose up -d`
+Run infra (postgres, redis): `docker compose -f docker-compose-infra.yaml up -d`
 
-File loading example: `curl --location 'http://localhost:8090/items/image/4' --form ''`
+File loading example: `curl --location 'http://localhost:8080/items/image/4' --form ''`
 
 ## Actuator endpoints
 Opened actuator endpoints list:
