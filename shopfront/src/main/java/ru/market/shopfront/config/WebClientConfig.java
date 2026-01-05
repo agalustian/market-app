@@ -30,7 +30,7 @@ public class WebClientConfig {
   @Bean
   public WebClient webClient(ReactiveOAuth2AuthorizedClientManager authorizedClientManager) {
     var oauth2Client = new ServerOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager);
-    oauth2Client.setDefaultClientRegistrationId("SERVICE");
+    oauth2Client.setDefaultClientRegistrationId("keycloak");
 
     return WebClient.builder()
         .filter(oauth2Client)

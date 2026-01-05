@@ -2,6 +2,19 @@ server:
   port: 8081
 
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: shopfront-service
+            client-secret: {CLIENT_SECRET}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/market-app
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/marketdb
     username: postgres
