@@ -64,11 +64,11 @@ Build jar: `sh  ./gradlew build` - path `build/libs/[payment|shopfront]-0.0.1.ja
 Build Dockerfile (in each module):  `cd ./shopfront && sh ./gradlew build && docker build -t shopfront:latest . && cd ..`
 
 Run shopfront docker container: `docker run -p 8081:8081 shopfront:latest`
-Run payment docker container: `docker run -p 8080:8080 shopfront:latest`
+Run payment docker container: `docker run -p 8082:8082 shopfront:latest`
 
 Run infra (postgres, redis): `docker compose -f docker-compose-infra.yaml up -d`
 
-File loading example: `curl --location 'http://localhost:8080/items/image/4' --form ''`
+File loading example: `curl --location 'http://localhost:8082/items/image/4' --form ''`
 
 ## Actuator endpoints
 Opened actuator endpoints list:
@@ -76,4 +76,4 @@ Opened actuator endpoints list:
 - info
 - metrics
 
-Example: `localhost:8080/actuator/metrics`
+Example: `localhost:8082/actuator/metrics`

@@ -28,7 +28,10 @@ public class PaymentService {
 
   public Mono<Integer> getBalance(UUID accountId) {
     return paymentApiClient.getAccountBalance(accountId)
-        .map(AccountBalance::getAmount)
+        .map(amount -> {
+          System.out.println("Received amount balance" + amount.getAmount());
+          return amount.getAmount();
+        })
         .onErrorReturn(BigDecimal.valueOf(0))
         .map(BigDecimal::intValue);
   }
