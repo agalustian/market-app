@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.payment.client.api.DefaultApi;
-import ru.market.shopfront.payment.domain.AccountBalance;
 import ru.market.shopfront.payment.domain.PaymentRequest;
 import ru.market.shopfront.payment.domain.PaymentResult;
 
@@ -32,7 +31,10 @@ public class PaymentService {
           System.out.println("Received amount balance" + amount.getAmount());
           return amount.getAmount();
         })
-        .onErrorReturn(BigDecimal.valueOf(0))
+        .onErrorResume(err -> {
+          System.out.println("Received error: " + err.getMessage());
+          return Mono.just(BigDecimal.valueOf(0));
+        })
         .map(BigDecimal::intValue);
   }
 
