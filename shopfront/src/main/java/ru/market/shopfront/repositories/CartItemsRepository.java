@@ -12,11 +12,11 @@ import ru.market.shopfront.models.CartItem;
 public interface CartItemsRepository extends ReactiveCrudRepository<CartItem, Integer> {
 
   @Query("""
-      SELECT ci.id, ci.cart_id, ci.item_id, ci.count, i.title as "title", i.price as "price", i.img_path as "img_path", i.description as "description"
+      SELECT ci.id, ci.user_id, ci.item_id, ci.count, i.title as "title", i.price as "price", i.img_path as "img_path", i.description as "description"
       FROM cart_items ci INNER JOIN items i ON ci.item_id = i.id
-      WHERE ci.cart_id = :cartId and i.id = :itemId
+      WHERE ci.user_id = :userId and i.id = :itemId
       """)
-  Mono<CartItem> findByCartIdAndItemId(Integer cartId, Integer itemId);
+  Mono<CartItem> findByUserIdAndItemId(String userId, Integer itemId);
 
   @Modifying
   @Query("UPDATE cart_items SET count = count + 1 WHERE id = :id")
@@ -27,12 +27,12 @@ public interface CartItemsRepository extends ReactiveCrudRepository<CartItem, In
   Mono<Void> decrementCountById(Integer id);
 
   @Query("""
-      SELECT ci.id, ci.cart_id, ci.item_id, ci.count, i.title as "title", i.price as "price", i.img_path as "img_path", i.description as "description"
+      SELECT ci.id, ci.user_id, ci.item_id, ci.count, i.title as "title", i.price as "price", i.img_path as "img_path", i.description as "description"
       FROM cart_items ci LEFT JOIN items i ON ci.item_id = i.id
-      WHERE ci.cart_id = :cartId
+      WHERE ci.user_id = :userId
       """)
-  Flux<CartItem> findCartItems(Integer cartId);
+  Flux<CartItem> findCartItems(String userId);
 
-  Mono<Void> deleteAllByCartId(Integer cartId);
+  Mono<Void> deleteAllByUserId(String userId);
 
 }

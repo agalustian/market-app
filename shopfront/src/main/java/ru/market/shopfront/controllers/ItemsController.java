@@ -4,6 +4,9 @@ import java.util.Base64;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -30,9 +33,6 @@ public class ItemsController {
   // TODO move to environment variables
   private static final Integer ITEMS_CHUNK_SIZE = 3;
 
-  // TODO for test
-  private static final Integer CART_ID = 999;
-
   private static final String ITEMS_VIEW = "items";
 
   private static final String ITEM_VIEW = "item";
@@ -48,12 +48,14 @@ public class ItemsController {
 
   @GetMapping("")
   Mono<Rendering> search(
+      @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
       @RequestParam(value = "sort", required = false, defaultValue = "NO") ItemsSort sort,
       @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
       @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize
   ) {
-    return itemsService.search(search, sort, PageRequest.of(pageNumber - 1, pageSize)).collectList()
+    return itemsService.search(search, sort, PageRequest.of(pageNumber - 1, pageSize), userDetails.getUsername())
+        .collectList()
         .flatMap(itemsDTO ->
             itemsService.searchCount(search).map(itemsTotalCount ->
                 Rendering.view(ITEMS_VIEW)
@@ -67,8 +69,10 @@ public class ItemsController {
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request, @ModelAttribute SearchRequest searchRequest) {
-    return cartsService.addRemoveToCart(CART_ID, request.itemId(), request.action()).then(
+  Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
+                                  @ModelAttribute AddRemoveToCartRequest request,
+                                  @ModelAttribute SearchRequest searchRequest) {
+    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action()).then(
         Mono.just(
             Rendering
                 .redirectTo(
@@ -81,25 +85,28 @@ public class ItemsController {
   }
 
   @PostMapping(value = "/{itemId}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request) {
-    return cartsService.addRemoveToCart(CART_ID, request.itemId(), request.action())
-        .then(redirectAfterAddRemove(request.itemId(), request.action()));
+  @PreAuthorize("hasAuthorities('USER')")
+  Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
+                                  @ModelAttribute AddRemoveToCartRequest request) {
+    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
+        .then(redirectAfterAddRemove(userDetails.getUsername(), request.itemId(), request.action()));
   }
 
-  private Mono<Rendering> redirectAfterAddRemove(Integer itemId, CartAction action) {
+  private Mono<Rendering> redirectAfterAddRemove(String userId, Integer itemId, CartAction action) {
     if (action == CartAction.DELETE) {
       return Mono.just(Rendering.redirectTo(ITEMS_VIEW).build());
     }
 
-    return itemsService.getItemById(itemId)
+    return itemsService.getItemById(itemId, userId)
         .map(itemDTO -> {
           return Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build();
         });
   }
 
   @GetMapping("/{itemId}")
-  Mono<Rendering> getItemById(@PathVariable("itemId") Integer itemId) {
-    return itemsService.getItemById(itemId)
+  Mono<Rendering> getItemById(@AuthenticationPrincipal UserDetails userDetails,
+                              @PathVariable("itemId") Integer itemId) {
+    return itemsService.getItemById(itemId, userDetails.getUsername())
         .map(itemDTO -> Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build());
   }
 

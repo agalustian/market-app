@@ -24,7 +24,7 @@ class OrdersControllerTests {
 
   @Test
   void shouldGetOrderById() {
-    when(ordersService.getOrder(1)).thenReturn(FixturesGenerator.generateOrderDTO());
+    when(ordersService.getOrder("test-user", 1)).thenReturn(FixturesGenerator.generateOrderDTO());
 
     webTestClient.get()
         .uri("/orders/1")
@@ -39,7 +39,7 @@ class OrdersControllerTests {
 
   @Test
   void shouldGetOrders() {
-    when(ordersService.getOrders()).thenReturn(Flux.just(FixturesGenerator.generateOrderDTO().block(), FixturesGenerator.generateOrderDTO().block()));
+    when(ordersService.getOrders("test-user")).thenReturn(Flux.just(FixturesGenerator.generateOrderDTO().block(), FixturesGenerator.generateOrderDTO().block()));
 
     webTestClient.get()
         .uri("/orders")

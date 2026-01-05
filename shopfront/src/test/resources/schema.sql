@@ -10,7 +10,7 @@ create table if not exists items
 create table if not exists cart_items
 (
     id      serial primary key,
-    cart_id integer,
+    user_id varchar(50) not null,
     item_id integer references items (id),
     count   integer not null
 );

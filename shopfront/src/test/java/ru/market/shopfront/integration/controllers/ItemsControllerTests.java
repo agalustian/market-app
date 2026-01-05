@@ -39,7 +39,7 @@ class ItemsControllerTests {
 
   @Test
   void shouldSearchItems() {
-    when(itemsService.search(eq("test"), eq(ItemsSort.NO), any(PageRequest.class))).thenReturn(
+    when(itemsService.search(eq("test"), eq(ItemsSort.NO), any(PageRequest.class), eq("test-user"))).thenReturn(
         FixturesGenerator.generateItems().map(ItemDTO::from));
     when(itemsService.searchCount(eq("test"))).thenReturn(Mono.just(5));
 
@@ -60,7 +60,8 @@ class ItemsControllerTests {
 
   @Test
   void shouldGetItemById() {
-    when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
+    when(itemsService.getItemById(1, "test-user")).thenReturn(
+        Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
 
     webTestClient.get()
         .uri("/items/1")
@@ -82,8 +83,8 @@ class ItemsControllerTests {
     @ParameterizedTest
     @EnumSource(CartAction.class)
     void shouldAddRemoveItemToCart(CartAction action) {
-      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+      when(cartsService.addRemoveToCart("test-user", 1, action)).thenReturn(Mono.empty());
+      when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
 
       webTestClient.post()
           .uri("/items?" + ACTUAL_URL_PARAMS)
@@ -102,8 +103,9 @@ class ItemsControllerTests {
     @ParameterizedTest
     @EnumSource(CartAction.class)
     void shouldAddRemoveItemToCart(CartAction action) {
-      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
+      when(cartsService.addRemoveToCart("test-user", 1, action)).thenReturn(Mono.empty());
+      when(itemsService.getItemById( 1, "test-user")).thenReturn(
+          Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
 
       var responseSpec = webTestClient.post()
           .uri("/items/1")

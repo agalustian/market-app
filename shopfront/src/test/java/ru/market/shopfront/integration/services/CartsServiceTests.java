@@ -37,8 +37,8 @@ class CartsServiceTests {
   void prepare() {
     var item = itemsRepository.save(new Item("title", 100, "description", "/2002")).block();
     var anotherItem = itemsRepository.save(new Item("title", 100, "description", "/2")).block();
-    cartItemsRepository.save(new CartItem(1001, item.getId(), 10)).block();
-    cartItemsRepository.save(new CartItem(1001, anotherItem.getId(), 1)).block();
+    cartItemsRepository.save(new CartItem("test-user", item.getId(), 10)).block();
+    cartItemsRepository.save(new CartItem("test-user", anotherItem.getId(), 1)).block();
   }
 
   @AfterEach
@@ -49,7 +49,7 @@ class CartsServiceTests {
 
   @Test
   void shouldCreateOrderOnBuying() {
-    cartsService.buy(1001)
+    cartsService.buy("test-user")
         .doOnNext(orderDTO -> {
           assertEquals(1, orderDTO.id());
           assertEquals(2, orderDTO.items().size());
@@ -61,7 +61,7 @@ class CartsServiceTests {
 
   @Test
   void shouldGetCart() {
-    cartsService.getCart(1001).collectList()
+    cartsService.getCart("test-user").collectList()
         .doOnNext(carItems -> {
           assertEquals(2, carItems.size());
 
@@ -82,9 +82,9 @@ class CartsServiceTests {
     var item = new Item("title", 1001, "description", "/3");
     itemsRepository.save(item).block();
 
-    cartsService.addRemoveToCart(1002, item.getId(), CartAction.PLUS)
+    cartsService.addRemoveToCart("test-user", item.getId(), CartAction.PLUS)
         .doOnNext(result -> {
-          var cartItems = cartsService.getCart(1002).collectList().block();
+          var cartItems = cartsService.getCart("test-user").collectList().block();
 
           assertEquals(1, cartItems.size());
           assertEquals(cartItems.getFirst().id(), item.getId());

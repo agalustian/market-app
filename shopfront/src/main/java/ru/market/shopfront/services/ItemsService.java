@@ -15,13 +15,13 @@ import ru.market.shopfront.dto.ItemDTO;
 import ru.market.shopfront.dto.ItemsSort;
 import ru.market.shopfront.models.CartItem;
 import ru.market.shopfront.models.Image;
+import ru.market.shopfront.models.Item;
 import ru.market.shopfront.repositories.CartItemsRepository;
 import ru.market.shopfront.repositories.ImagesRepository;
 import ru.market.shopfront.repositories.ItemsRepository;
 
 @Service
 public class ItemsService {
-  private static final Integer CART_ID = 999;
 
   private static final Integer MAX_BYTES = 5 * 1024 * 1024;
 
@@ -39,9 +39,9 @@ public class ItemsService {
     this.imagesRepository = imagesRepository;
   }
 
-  public Mono<ItemDTO> getItemById(final Integer itemId) {
+  public Mono<ItemDTO> getItemById(final Integer itemId, final String userId) {
     return itemsRepository.findById(itemId)
-        .flatMap(item -> cartItemsRepository.findByCartIdAndItemId(CART_ID, itemId)
+        .flatMap(item -> cartItemsRepository.findByUserIdAndItemId(userId, itemId)
             .map(CartItem::getCount)
             .defaultIfEmpty(0)
             .map(count -> {
@@ -52,11 +52,14 @@ public class ItemsService {
         ).map(ItemDTO::from);
   }
 
-  public Flux<ItemDTO> search(final String search, ItemsSort sort, PageRequest pageRequest) {
-    return itemsRepository.findItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search,
-            pageRequest.withSort(Sort.by(getSortField(sort)).ascending()))
+  public Mono<ItemDTO> getItemById(final Integer itemId) {
+    return itemsRepository.findById(itemId).map(ItemDTO::from);
+  }
+
+  public Flux<ItemDTO> search(final String search, ItemsSort sort, PageRequest pageRequest, String userId) {
+    return searchFromRepository(search, sort, pageRequest)
         .map(item ->
-            cartItemsRepository.findByCartIdAndItemId(CART_ID, item.getId())
+            cartItemsRepository.findByUserIdAndItemId(userId, item.getId())
                 .map(CartItem::getCount)
                 .defaultIfEmpty(0)
                 .map(count -> {
@@ -65,6 +68,15 @@ public class ItemsService {
                   return item;
                 })
         ).flatMap(el -> el.map(ItemDTO::from));
+  }
+
+  public Flux<ItemDTO> search(String search, ItemsSort sort, PageRequest pageRequest) {
+    return searchFromRepository(search, sort, pageRequest).map(ItemDTO::from);
+  }
+
+  private Flux<Item> searchFromRepository(String search, ItemsSort sort, PageRequest pageRequest) {
+    return itemsRepository.findItemsByTitleContainingIgnoreCaseOrDescriptionContainingIgnoreCase(search, search,
+        pageRequest.withSort(Sort.by(getSortField(sort)).ascending()));
   }
 
   public Mono<Integer> searchCount(final String search) {

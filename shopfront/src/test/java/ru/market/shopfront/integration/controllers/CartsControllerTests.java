@@ -39,7 +39,7 @@ class CartsControllerTests {
 
   @Test
   void shouldGetCartItems() {
-    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+    when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
     webTestClient.get()
@@ -56,7 +56,7 @@ class CartsControllerTests {
 
   @Test
   void shouldNotContainBuyButtonOnEmptyBalance() {
-    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+    when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(0));
 
     webTestClient.get()
@@ -73,9 +73,10 @@ class CartsControllerTests {
 
   @Test
   void shouldBuyCartItems() {
-    when(cartsService.buy(999))
+    var userId = "test-user";
+    when(cartsService.buy(userId))
         .thenReturn(Mono.just(
-                OrderDTO.from(new Order(1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
+                OrderDTO.from(new Order(userId, 1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
             )
         );
     var paymentResult = new PaymentResult();
@@ -90,15 +91,16 @@ class CartsControllerTests {
 
   @Test
   void shouldReturnPaymentErrorOnBuying() {
-    when(cartsService.buy(999))
+    var userId = 999;
+    when(cartsService.buy("test-user"))
         .thenReturn(Mono.just(
-                OrderDTO.from(new Order(1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
+                OrderDTO.from(new Order("test-user", 1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
             )
         );
     var paymentResult = new PaymentResult();
     paymentResult.setStatus(PaymentResult.StatusEnum.FAILED);
     when(paymentService.chargePayment(any(UUID.class), any(UUID.class), any(Integer.class))).thenReturn(Mono.just(paymentResult));
-    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+    when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
     webTestClient.post()
@@ -118,8 +120,8 @@ class CartsControllerTests {
     @ParameterizedTest
     @EnumSource(CartAction.class)
     void shouldAddRemoveItemToCart(CartAction action) {
-      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+      when(cartsService.addRemoveToCart("test-user", 1, action)).thenReturn(Mono.empty());
+      when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
       when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
 
