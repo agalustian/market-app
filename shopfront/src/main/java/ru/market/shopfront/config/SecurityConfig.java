@@ -56,7 +56,7 @@ public class SecurityConfig {
             .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
         )
         .authorizeExchange(exchanges -> exchanges
-            .pathMatchers("/items").permitAll()
+            .pathMatchers("/login", "/items/**").permitAll()
             .anyExchange().authenticated()
         )
         .formLogin(form -> form

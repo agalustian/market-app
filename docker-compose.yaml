@@ -3,7 +3,7 @@ services:
     image: shopfront:latest
     restart: always
     environment:
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
 
   payment:
