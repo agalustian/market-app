@@ -68,6 +68,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/PaymentResult"
 components:
+  securitySchemes:
+    OAuth2ClientCredentials: # Arbitrary name for the scheme
+      type: oauth2
+      description: Client credentials flow for machine-to-machine authentication
+      flows:
+        clientCredentials:
+          tokenUrl: https://localhost:8080/oauth/token
+          scopes:
+            board:read: Read the board
+            board:write: Write to the board
   parameters:
     accountId:
       in: path
