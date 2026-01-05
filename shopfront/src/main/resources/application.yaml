@@ -14,7 +14,7 @@ spring:
           keycloak:
             provider: keycloak
             client-id: shopfront-service
-            client-secret: MVx4Mrx5b1KWasoLBRFJ9MuslIoJCbug
+            client-secret: ${client_secret}
             authorization-grant-type: client_credentials
             scope: openid
         provider:

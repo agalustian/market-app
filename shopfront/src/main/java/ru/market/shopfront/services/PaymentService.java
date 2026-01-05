@@ -25,10 +25,11 @@ public class PaymentService {
     return paymentApiClient.executePayment(accountId, operationId, paymentRequest);
   }
 
+  // TODO use logger
   public Mono<Integer> getBalance(UUID accountId) {
     return paymentApiClient.getAccountBalance(accountId)
         .map(amount -> {
-          System.out.println("Received amount balance" + amount.getAmount());
+          System.out.println("Received amount balance: " + amount.getAmount());
           return amount.getAmount();
         })
         .onErrorResume(err -> {
