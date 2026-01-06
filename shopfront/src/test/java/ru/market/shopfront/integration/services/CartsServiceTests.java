@@ -76,6 +76,24 @@ class CartsServiceTests {
   }
 
   @Test
+  void shouldGetOwnCart() {
+    var item = itemsRepository.save(new Item("title", 100, "description", "/2")).block();
+    cartItemsRepository.save(new CartItem("another-test-user", item.getId(), 1)).block();
+
+    cartsService.getCart("another-test-user").collectList()
+        .doOnNext(carItems -> {
+          assertEquals(1, carItems.size());
+
+          var carItem = carItems.getFirst();
+
+          assertEquals(1, carItem.count());
+          assertEquals("title", carItem.title());
+          assertEquals(100, carItem.price());
+          assertEquals("description", carItem.description());
+        }).block();
+  }
+
+  @Test
   void shouldAddToCart() {
     cartItemsRepository.deleteAll().block();
 

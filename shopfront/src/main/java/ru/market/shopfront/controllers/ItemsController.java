@@ -81,7 +81,7 @@ public class ItemsController {
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  @PreAuthorize("hasRoles('MANAGER')")
+  @PreAuthorize("hasRoles('USER')")
   Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
                                   @ModelAttribute AddRemoveToCartRequest request,
                                   @ModelAttribute SearchRequest searchRequest) {

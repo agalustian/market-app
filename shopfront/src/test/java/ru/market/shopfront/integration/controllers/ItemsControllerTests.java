@@ -77,6 +77,14 @@ class ItemsControllerTests {
     checkGetByIdRequest();
   }
 
+  @Test
+  void shouldGetItemByIdForUnauthorizedUser() {
+    when(itemsService.getItemById(1))
+        .thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
+
+    checkGetByIdRequest();
+  }
+
   private void checkGetByIdRequest() {
     webTestClient.get()
         .uri("/items/1")
