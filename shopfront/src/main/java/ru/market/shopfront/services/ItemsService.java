@@ -39,7 +39,7 @@ public class ItemsService {
     this.imagesRepository = imagesRepository;
   }
 
-  public Mono<ItemDTO> getItemById(final Integer itemId, final String userId) {
+  public Mono<ItemDTO> getItemByIdForUser(final Integer itemId, final String userId) {
     return itemsRepository.findById(itemId)
         .flatMap(item -> cartItemsRepository.findByUserIdAndItemId(userId, itemId)
             .map(CartItem::getCount)
@@ -56,7 +56,7 @@ public class ItemsService {
     return itemsRepository.findById(itemId).map(ItemDTO::from);
   }
 
-  public Flux<ItemDTO> search(final String search, ItemsSort sort, PageRequest pageRequest, String userId) {
+  public Flux<ItemDTO> searchForUser(final String search, ItemsSort sort, PageRequest pageRequest, String userId) {
     return searchFromRepository(search, sort, pageRequest)
         .map(item ->
             cartItemsRepository.findByUserIdAndItemId(userId, item.getId())

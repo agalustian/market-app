@@ -4,7 +4,6 @@ import java.util.Base64;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -17,9 +16,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.dto.AddRemoveToCartRequest;
 import ru.market.shopfront.dto.CartAction;
+import ru.market.shopfront.dto.ItemDTO;
 import ru.market.shopfront.dto.ItemsDTO;
 import ru.market.shopfront.dto.ItemsSort;
 import ru.market.shopfront.dto.Paging;
@@ -51,10 +52,10 @@ public class ItemsController {
       @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
       @RequestParam(value = "sort", required = false, defaultValue = "NO") ItemsSort sort,
-      @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+      @RequestParam(value = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
       @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize
   ) {
-    return itemsService.search(search, sort, PageRequest.of(pageNumber - 1, pageSize), userDetails.getUsername())
+    return searchFor(search, sort, PageRequest.of(pageNumber, pageSize), userDetails)
         .collectList()
         .flatMap(itemsDTO ->
             itemsService.searchCount(search).map(itemsTotalCount ->
@@ -68,7 +69,16 @@ public class ItemsController {
         );
   }
 
+  private Flux<ItemDTO> searchFor(String search, ItemsSort sort, PageRequest pageRequest, UserDetails userDetails) {
+    if (userDetails == null) {
+      return itemsService.search(search, sort, pageRequest);
+    }
+
+    return itemsService.searchForUser(search, sort, pageRequest, userDetails.getUsername());
+  }
+
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    //  @PreAuthorize("hasRoles('USER')")
   Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
                                   @ModelAttribute AddRemoveToCartRequest request,
                                   @ModelAttribute SearchRequest searchRequest) {
@@ -85,7 +95,7 @@ public class ItemsController {
   }
 
   @PostMapping(value = "/{itemId}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  @PreAuthorize("hasAuthorities('USER')")
+//  @PreAuthorize("hasRoles('USER')")
   Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
                                   @ModelAttribute AddRemoveToCartRequest request) {
     return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
@@ -97,17 +107,26 @@ public class ItemsController {
       return Mono.just(Rendering.redirectTo(ITEMS_VIEW).build());
     }
 
-    return itemsService.getItemById(itemId, userId)
+    return itemsService.getItemByIdForUser(itemId, userId)
         .map(itemDTO -> {
           return Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build();
         });
   }
 
   @GetMapping("/{itemId}")
-  Mono<Rendering> getItemById(@AuthenticationPrincipal UserDetails userDetails,
-                              @PathVariable("itemId") Integer itemId) {
-    return itemsService.getItemById(itemId, userDetails.getUsername())
+  Mono<Rendering> getItemById(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable("itemId") Integer itemId) {
+    return getItem(itemId, userDetails)
         .map(itemDTO -> Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build());
+  }
+
+  private Mono<ItemDTO> getItem(Integer itemId, UserDetails userDetails) {
+    if (userDetails == null) {
+      return itemsService.getItemById(itemId);
+    }
+
+    return itemsService.getItemByIdForUser(itemId, userDetails.getUsername());
   }
 
   @PostMapping("/image/{itemId}")

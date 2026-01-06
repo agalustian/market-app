@@ -5,7 +5,12 @@ server:
       charset: UTF-8
       enabled: true
       force: true
-
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          r2dbc: DEBUG
 spring:
   security:
     oauth2:

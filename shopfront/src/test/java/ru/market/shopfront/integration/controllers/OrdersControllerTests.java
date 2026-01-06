@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
@@ -23,6 +24,7 @@ class OrdersControllerTests {
   private OrdersService ordersService;
 
   @Test
+  @WithMockUser(username = "test-user")
   void shouldGetOrderById() {
     when(ordersService.getOrder("test-user", 1)).thenReturn(FixturesGenerator.generateOrderDTO());
 
@@ -38,6 +40,15 @@ class OrdersControllerTests {
   }
 
   @Test
+  void shouldDenyGetOrderByIdForUnauthorizedUser() {
+    webTestClient.get()
+        .uri("/orders/1")
+        .exchange()
+        .expectStatus().isUnauthorized();
+  }
+
+  @Test
+  @WithMockUser(username = "test-user")
   void shouldGetOrders() {
     when(ordersService.getOrders("test-user")).thenReturn(Flux.just(FixturesGenerator.generateOrderDTO().block(), FixturesGenerator.generateOrderDTO().block()));
 
@@ -50,6 +61,14 @@ class OrdersControllerTests {
         .value(html -> {
           assert html.contains("<a href=\"/orders/null\">Заказ №null</a>");
         });
+  }
+
+  @Test
+  void shouldDenyGetOrdersForUnauthorizedUser() {
+    webTestClient.get()
+        .uri("/orders")
+        .exchange()
+        .expectStatus().isUnauthorized();
   }
 
 }
