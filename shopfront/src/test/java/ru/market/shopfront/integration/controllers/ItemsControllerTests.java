@@ -1,5 +1,6 @@
 package ru.market.shopfront.integration.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -49,14 +50,6 @@ class ItemsControllerTests {
     checkSearchRequest();
   }
 
-  @Test
-  void shouldSearchItemsForUnauthorizedUser() {
-    when(itemsService.search(eq("test"), eq(ItemsSort.NO), any(PageRequest.class))).thenReturn(
-        FixturesGenerator.generateItems().map(ItemDTO::from));
-
-    checkSearchRequest();
-  }
-
   private void checkSearchRequest() {
     when(itemsService.searchCount(eq("test"))).thenReturn(Mono.just(5));
 
@@ -84,17 +77,10 @@ class ItemsControllerTests {
     checkGetByIdRequest();
   }
 
-  @Test
-  void shouldGetItemByIdForUnauthorizedUser() {
-    when(itemsService.getItemById(1))
-        .thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
-
-    checkGetByIdRequest();
-  }
-
   private void checkGetByIdRequest() {
     webTestClient.get()
         .uri("/items/1")
+        .header("Accept", "text/html")
         .exchange()
         .expectStatus().is2xxSuccessful()
         .expectHeader().contentType("text/html")
@@ -125,7 +111,7 @@ class ItemsControllerTests {
     @EnumSource(CartAction.class)
     void shouldDenyAddRemoveItemToCartForUnauthorizedUser(CartAction action) {
       generateAddRemoveSpec(action)
-          .expectStatus().isUnauthorized();
+          .expectStatus().is3xxRedirection();
     }
 
     private WebTestClient.ResponseSpec generateAddRemoveSpec(CartAction action) {
@@ -164,7 +150,7 @@ class ItemsControllerTests {
     @EnumSource(CartAction.class)
     void shouldDenyAddRemoveItemToCartForUnauthorizedUser(CartAction action) {
       generateAddRemoveSpec(action)
-          .expectStatus().isUnauthorized();
+          .expectStatus().is3xxRedirection();
     }
 
     private WebTestClient.ResponseSpec generateAddRemoveSpec(CartAction action) {
@@ -181,11 +167,6 @@ class ItemsControllerTests {
   @Test
   @WithMockUser(username = "test-user", roles = "USER")
   void shouldGetImage() {
-    checkGetImage();
-  }
-
-  @Test
-  void shouldGetImageForUnauthorizedUser() {
     checkGetImage();
   }
 

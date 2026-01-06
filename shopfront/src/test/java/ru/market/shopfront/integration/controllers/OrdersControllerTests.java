@@ -1,5 +1,6 @@
 package ru.market.shopfront.integration.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,17 @@ class OrdersControllerTests {
   private OrdersService ordersService;
 
   @Test
+  void shouldRedirectUnauthorizedUserToLoginPage() {
+    webTestClient.get()
+        .uri("/orders/1")
+        .header("Accept", "text/html")
+        .exchange()
+        .expectStatus().is3xxRedirection()
+        .expectHeader().value("Location", location ->
+            assertThat(location).contains("/login"));
+  }
+
+  @Test
   @WithMockUser(username = "test-user")
   void shouldGetOrderById() {
     when(ordersService.getOrder("test-user", 1)).thenReturn(FixturesGenerator.generateOrderDTO());
@@ -44,7 +56,7 @@ class OrdersControllerTests {
     webTestClient.get()
         .uri("/orders/1")
         .exchange()
-        .expectStatus().isUnauthorized();
+        .expectStatus().is3xxRedirection();
   }
 
   @Test
@@ -68,7 +80,7 @@ class OrdersControllerTests {
     webTestClient.get()
         .uri("/orders")
         .exchange()
-        .expectStatus().isUnauthorized();
+        .expectStatus().is3xxRedirection();
   }
 
 }

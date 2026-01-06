@@ -1,5 +1,6 @@
 package ru.market.shopfront.integration.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
@@ -11,7 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,6 +43,17 @@ class CartsControllerTests {
   private PaymentService paymentService;
 
   @Test
+  void shouldRedirectUnauthorizedUserToLoginPage() {
+    webTestClient.get()
+        .uri("/carts/items")
+        .header("Accept", "text/html")
+        .exchange()
+        .expectStatus().is3xxRedirection()
+        .expectHeader().value("Location", location ->
+            assertThat(location).contains("/login"));
+  }
+
+  @Test
   @WithMockUser(username = "test-user")
   void shouldGetCartItems() {
     when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
@@ -62,7 +76,7 @@ class CartsControllerTests {
     webTestClient.get()
         .uri("/cart/items")
         .exchange()
-        .expectStatus().isUnauthorized();
+        .expectStatus().is3xxRedirection();
   }
 
   @Test
@@ -109,7 +123,7 @@ class CartsControllerTests {
         .post()
         .uri("/cart/buy")
         .exchange()
-        .expectStatus().isUnauthorized();
+        .expectStatus().is3xxRedirection();
   }
 
   @Test
@@ -162,7 +176,7 @@ class CartsControllerTests {
     @EnumSource(CartAction.class)
     void shouldDenyAddRemoveItemToCart(CartAction action) {
       generateAddRemoveSpec(action)
-          .expectStatus().isUnauthorized();
+          .expectStatus().is3xxRedirection();
     }
 
     private WebTestClient.ResponseSpec generateAddRemoveSpec(CartAction action) {

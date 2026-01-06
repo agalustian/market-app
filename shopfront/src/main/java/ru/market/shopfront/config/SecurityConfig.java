@@ -5,6 +5,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 import java.net.URI;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
@@ -13,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
@@ -55,13 +57,16 @@ public class SecurityConfig {
         .csrf(csrf -> csrf
             .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
         )
-        .authorizeExchange(exchanges -> exchanges
-            .pathMatchers("/login", "/items/**", "/items/image/**").permitAll()
-            .anyExchange().authenticated()
-        )
         .formLogin(form -> form
             .loginPage("/login")
             .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/items"))
+        )
+        .exceptionHandling(exceptionHandling -> exceptionHandling
+            .authenticationEntryPoint(new HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
+        )
+        .authorizeExchange(exchanges -> exchanges
+            .pathMatchers("/login", "/items/**", "/items/image/**").permitAll()
+            .anyExchange().authenticated()
         )
         .logout(logout -> logout
             .logoutUrl("/logout")
