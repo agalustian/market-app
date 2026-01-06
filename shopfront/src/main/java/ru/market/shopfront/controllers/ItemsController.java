@@ -1,9 +1,11 @@
 package ru.market.shopfront.controllers;
 
 import java.util.Base64;
+import java.util.Objects;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -64,6 +66,7 @@ public class ItemsController {
                     .modelAttribute("search", search)
                     .modelAttribute("sort", sort)
                     .modelAttribute("paging", new Paging(pageNumber, pageSize, itemsTotalCount))
+                    .modelAttribute("isAuthorized", !Objects.isNull(userDetails))
                     .build()
             )
         );
@@ -78,7 +81,7 @@ public class ItemsController {
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    //  @PreAuthorize("hasRoles('USER')")
+  @PreAuthorize("hasRoles('MANAGER')")
   Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
                                   @ModelAttribute AddRemoveToCartRequest request,
                                   @ModelAttribute SearchRequest searchRequest) {
@@ -95,7 +98,7 @@ public class ItemsController {
   }
 
   @PostMapping(value = "/{itemId}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-//  @PreAuthorize("hasRoles('USER')")
+  @PreAuthorize("hasRoles('USER')")
   Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
                                   @ModelAttribute AddRemoveToCartRequest request) {
     return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
@@ -118,7 +121,11 @@ public class ItemsController {
       @AuthenticationPrincipal UserDetails userDetails,
       @PathVariable("itemId") Integer itemId) {
     return getItem(itemId, userDetails)
-        .map(itemDTO -> Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build());
+        .map(itemDTO -> Rendering.view(ITEM_VIEW)
+            .modelAttribute("item", itemDTO)
+            .modelAttribute("isAuthorized", !Objects.isNull(userDetails))
+            .build()
+        );
   }
 
   private Mono<ItemDTO> getItem(Integer itemId, UserDetails userDetails) {
