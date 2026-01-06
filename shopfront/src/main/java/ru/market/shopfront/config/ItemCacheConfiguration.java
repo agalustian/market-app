@@ -32,11 +32,11 @@ public class ItemCacheConfiguration {
     return builder -> builder.cacheDefaults(defaultCacheConfig()
         .serializeValuesWith(fromSerializer(itemSerializer))
         .disableCachingNullValues()
-        .entryTtl(Duration.of(30, ChronoUnit.SECONDS)))
+        .entryTtl(Duration.of(5, ChronoUnit.SECONDS)))
         .withCacheConfiguration("items", defaultCacheConfig()
             .serializeValuesWith(fromSerializer(itemsSerializer))
             .disableCachingNullValues()
-            .entryTtl(Duration.of(60, ChronoUnit.SECONDS)));
+            .entryTtl(Duration.of(5, ChronoUnit.SECONDS)));
   }
 
 }
