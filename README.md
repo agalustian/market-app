@@ -12,7 +12,7 @@ Search items, add to cart and buy it.
 ## Tech stack
 Language: `Java 21`
 
-Framework: `Spring core + Spring boot + Spring WebFlux + Spring R2DBC`
+Framework: `Spring core + Spring boot + Spring WebFlux + Spring R2DBC + Spring security`
 
 Test tools: `Spring boot test \ JUNIT 5 \ Jupiter \ Mockito \ TestContainers`
 
@@ -64,11 +64,11 @@ Build jar: `sh  ./gradlew build` - path `build/libs/[payment|shopfront]-0.0.1.ja
 Build Dockerfile (in each module):  `cd ./shopfront && sh ./gradlew build && docker build -t shopfront:latest . && cd ..`
 
 Run shopfront docker container: `docker run -p 8081:8081 shopfront:latest`
-Run payment docker container: `docker run -p 8082:8082 shopfront:latest`
+Run payment docker container: `docker run -p 8081:8081 shopfront:latest`
 
-Run infra (postgres, redis): `docker compose -f docker-compose-infra.yaml up -d`
+Run infra (postgres, redis, keycloak): `sh ./scripts/start-infra`
 
-File loading example: `curl --location 'http://localhost:8082/items/image/4' --form ''`
+File loading example: `curl --location 'http://localhost:8081/items/image/4' --form ''`
 
 ## Actuator endpoints
 Opened actuator endpoints list:
@@ -76,4 +76,4 @@ Opened actuator endpoints list:
 - info
 - metrics
 
-Example: `localhost:8082/actuator/metrics`
+Example: `localhost:8081/actuator/metrics`
