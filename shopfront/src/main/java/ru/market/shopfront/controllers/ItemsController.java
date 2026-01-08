@@ -118,7 +118,7 @@ public class ItemsController extends BaseController {
     return executeWithUsername(username -> getItem(itemId, username)
         .map(itemDTO -> Rendering.view(ITEM_VIEW)
             .modelAttribute("item", itemDTO)
-            .modelAttribute("isAuthorized", !Objects.isNull(SecurityUtils.getUsername()))
+            .modelAttribute("isAuthorized", !Objects.isNull(username))
             .build()
         ));
   }
