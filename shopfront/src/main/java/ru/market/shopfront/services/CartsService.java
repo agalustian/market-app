@@ -32,28 +32,28 @@ public class CartsService {
     this.orderItemsRepository = orderItemsRepository;
   }
 
-  public Flux<ItemDTO> getCart(final Integer cartId) {
-    return cartItemsRepository.findCartItems(cartId).map(ItemDTO::from);
+  public Flux<ItemDTO> getCart(final String userId) {
+    return cartItemsRepository.findCartItems(userId).map(ItemDTO::from);
   }
 
-  public Mono<Void> addRemoveToCart(final Integer cartId, Integer itemId, CartAction cartAction) {
-    return getOrCreateCartItem(cartId, itemId).flatMap(cartItem -> switch (cartAction) {
+  public Mono<Void> addRemoveToCart(final String userId, Integer itemId, CartAction cartAction) {
+    return getOrCreateCartItem(userId, itemId).flatMap(cartItem -> switch (cartAction) {
       case PLUS -> cartItemsRepository.incrementCountById(cartItem.getId());
       case MINUS -> cartItemsRepository.decrementCountById(cartItem.getId());
       case DELETE -> cartItemsRepository.deleteById(cartItem.getId());
     });
   }
 
-  private Mono<CartItem> getOrCreateCartItem(Integer cartId, Integer itemId) {
-    return cartItemsRepository.findByCartIdAndItemId(cartId, itemId)
-        .switchIfEmpty(cartItemsRepository.save(new CartItem(cartId, itemId, 0)));
+  private Mono<CartItem> getOrCreateCartItem(String userId, Integer itemId) {
+    return cartItemsRepository.findByUserIdAndItemId(userId, itemId)
+        .switchIfEmpty(cartItemsRepository.save(new CartItem(userId, itemId, 0)));
   }
 
   @Transactional
-  public Mono<OrderDTO> buy(final Integer cartId) {
-    return cartItemsRepository.findCartItems(cartId).collectList()
+  public Mono<OrderDTO> buy(final String userId) {
+    return cartItemsRepository.findCartItems(userId).collectList()
         .flatMap(cartItems -> {
-          var order = Order.from(cartItems);
+          var order = Order.from(userId, cartItems);
 
           if (cartItems.isEmpty()) {
             return Mono.empty();
@@ -65,7 +65,7 @@ public class CartsService {
                     cartItem -> OrderItem.from(savedOrder.getId(), cartItem, cartItem.getCount())).toList();
 
                 return orderItemsRepository.saveAll(orderItems)
-                    .then(cartItemsRepository.deleteAllByCartId(cartId))
+                    .then(cartItemsRepository.deleteAllByUserId(userId))
                     .then(Mono.just(OrderDTO.from(savedOrder, orderItems)));
               });
         });

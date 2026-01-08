@@ -24,7 +24,7 @@ public class FixturesGenerator {
 
   public static Flux<CartItem> generateCartItems() {
     return generateItems().map(item ->
-        new CartItem(999 + item.getId(), 999, item.getId(), 10, item.getTitle(), item.getPrice(), "t", "d")
+        new CartItem(999 + item.getId(), "test-user", item.getId(), 10, item.getTitle(), item.getPrice(), "t", "d")
     );
   }
 
@@ -40,7 +40,7 @@ public class FixturesGenerator {
 
   public static Mono<OrderDTO> generateOrderDTO() {
     return Mono.just(
-        OrderDTO.from(new Order(1111), Objects.requireNonNull(generateOrderItems().collectList().block())));
+        OrderDTO.from(new Order("test-user", 1111), Objects.requireNonNull(generateOrderItems().collectList().block())));
   }
 
   public static MultiValueMap generateAddRemoveToCartBody(CartAction action) {

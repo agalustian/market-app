@@ -7,7 +7,7 @@
 --    ('5', 'Item 5','/image/5', 'Great item 5', 10005),
 --    ('6', 'Item 6','/image/6', 'Great item 6', 10006);
 --
---insert into cart_items (item_id, cart_id, count)
+--insert into cart_items (item_id, user_id, count)
 --values
---    ('1', '999', 5),
---    ('2', '999', 52);
+--    ('1', 'test-user', 5),
+--    ('2', 'test-user', 52);

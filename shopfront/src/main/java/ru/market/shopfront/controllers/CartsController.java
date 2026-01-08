@@ -2,6 +2,8 @@ package ru.market.shopfront.controllers;
 
 import java.util.UUID;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -19,9 +21,6 @@ import ru.market.shopfront.services.PaymentService;
 @RequestMapping("/cart")
 public class CartsController {
 
-  // TODO for test
-  private static final Integer CART_ID = 999;
-
   private static final String CART_VIEW = "cart";
 
   private final CartsService cartsService;
@@ -34,13 +33,13 @@ public class CartsController {
   }
 
   @GetMapping("/items")
-  public Mono<Rendering> getCartItems() {
-    return getCartItemsView(CART_ID);
+  public Mono<Rendering> getCartItems(@AuthenticationPrincipal UserDetails userDetails) {
+    return getCartItemsView(userDetails.getUsername());
   }
 
   @PostMapping("/buy")
-  public Mono<Rendering> buy() {
-    return cartsService.buy(CART_ID)
+  public Mono<Rendering> buy(@AuthenticationPrincipal UserDetails userDetails) {
+    return cartsService.buy(userDetails.getUsername())
         .flatMap(
             orderDTO -> {
               // This is not optimal decision, not transaction fail safe!
@@ -55,22 +54,22 @@ public class CartsController {
                       }
                   )
                   .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()))
-                  .onErrorResume(err -> getCartItemsView(CART_ID, err.getMessage()));
+                  .onErrorResume(err -> getCartItemsView(userDetails.getUsername(), err.getMessage()));
             });
   }
 
   @PostMapping(value = "/items", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  public Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request) {
-    return cartsService.addRemoveToCart(CART_ID, request.itemId(), request.action())
-        .then(getCartItemsView(CART_ID));
+  public Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute AddRemoveToCartRequest request) {
+    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
+        .then(getCartItemsView(userDetails.getUsername()));
   }
 
-  private Mono<Rendering> getCartItemsView(final Integer cartId) {
-    return getCartItemsView(cartId, "");
+  private Mono<Rendering> getCartItemsView(final String userId) {
+    return getCartItemsView(userId, "");
   }
 
-  private Mono<Rendering> getCartItemsView(final Integer cartId, String errorMessage) {
-    return cartsService.getCart(cartId)
+  private Mono<Rendering> getCartItemsView(final String userId, String errorMessage) {
+    return cartsService.getCart(userId)
         .collectList()
         .flatMap(cartItems ->
             paymentService.getBalance(UUID.randomUUID())

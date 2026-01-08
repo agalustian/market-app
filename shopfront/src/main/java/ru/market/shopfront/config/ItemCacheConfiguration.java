@@ -1,6 +1,5 @@
 package ru.market.shopfront.config;
 
-import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.EXISTING_PROPERTY;
 import static com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY;
 import static org.springframework.data.redis.cache.RedisCacheConfiguration.defaultCacheConfig;
 import static org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair.fromSerializer;
@@ -32,11 +31,11 @@ public class ItemCacheConfiguration {
     return builder -> builder.cacheDefaults(defaultCacheConfig()
         .serializeValuesWith(fromSerializer(itemSerializer))
         .disableCachingNullValues()
-        .entryTtl(Duration.of(30, ChronoUnit.SECONDS)))
+        .entryTtl(Duration.of(5, ChronoUnit.SECONDS)))
         .withCacheConfiguration("items", defaultCacheConfig()
             .serializeValuesWith(fromSerializer(itemsSerializer))
             .disableCachingNullValues()
-            .entryTtl(Duration.of(60, ChronoUnit.SECONDS)));
+            .entryTtl(Duration.of(5, ChronoUnit.SECONDS)));
   }
 
 }

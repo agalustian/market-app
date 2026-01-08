@@ -1,8 +1,11 @@
 package ru.market.shopfront.integration.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 import java.util.Objects;
 import org.junit.jupiter.api.Nested;
@@ -13,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -38,9 +42,15 @@ class ItemsControllerTests {
   private CartsService cartsService;
 
   @Test
+  @WithMockUser(username = "test-user")
   void shouldSearchItems() {
-    when(itemsService.search(eq("test"), eq(ItemsSort.NO), any(PageRequest.class))).thenReturn(
+    when(itemsService.searchForUser(eq("test"), eq(ItemsSort.NO), any(PageRequest.class), eq("test-user"))).thenReturn(
         FixturesGenerator.generateItems().map(ItemDTO::from));
+
+    checkSearchRequest();
+  }
+
+  private void checkSearchRequest() {
     when(itemsService.searchCount(eq("test"))).thenReturn(Mono.just(5));
 
     webTestClient.get()
@@ -59,11 +69,26 @@ class ItemsControllerTests {
   }
 
   @Test
+  @WithMockUser(username = "test-user")
   void shouldGetItemById() {
-    when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
+    when(itemsService.getItemByIdForUser(1, "test-user"))
+        .thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
 
+    checkGetByIdRequest();
+  }
+
+  @Test
+  void shouldGetItemByIdForUnauthorizedUser() {
+    when(itemsService.getItemById(1))
+        .thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
+
+    checkGetByIdRequest();
+  }
+
+  private void checkGetByIdRequest() {
     webTestClient.get()
         .uri("/items/1")
+        .header("Accept", "text/html")
         .exchange()
         .expectStatus().is2xxSuccessful()
         .expectHeader().contentType("text/html")
@@ -81,16 +106,29 @@ class ItemsControllerTests {
 
     @ParameterizedTest
     @EnumSource(CartAction.class)
+    @WithMockUser(username = "test-user")
     void shouldAddRemoveItemToCart(CartAction action) {
-      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+      when(cartsService.addRemoveToCart("test-user", 1, action)).thenReturn(Mono.empty());
+      when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
 
-      webTestClient.post()
+      generateAddRemoveSpec(action)
+          .expectStatus().is3xxRedirection();
+    }
+
+    @ParameterizedTest
+    @EnumSource(CartAction.class)
+    void shouldDenyAddRemoveItemToCartForUnauthorizedUser(CartAction action) {
+      generateAddRemoveSpec(action)
+          .expectStatus().is3xxRedirection();
+    }
+
+    private WebTestClient.ResponseSpec generateAddRemoveSpec(CartAction action) {
+      return webTestClient.mutateWith(csrf())
+          .post()
           .uri("/items?" + ACTUAL_URL_PARAMS)
           .contentType(MediaType.APPLICATION_FORM_URLENCODED)
           .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
-          .exchange()
-          .expectStatus().is3xxRedirection();
+          .exchange();
     }
 
   }
@@ -101,15 +139,13 @@ class ItemsControllerTests {
 
     @ParameterizedTest
     @EnumSource(CartAction.class)
+    @WithMockUser(username = "test-user", roles = "USER")
     void shouldAddRemoveItemToCart(CartAction action) {
-      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(itemsService.getItemById(1)).thenReturn(Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
+      when(cartsService.addRemoveToCart("test-user", 1, action)).thenReturn(Mono.empty());
+      when(itemsService.getItemByIdForUser(1, "test-user")).thenReturn(
+          Mono.just(Objects.requireNonNull(FixturesGenerator.generateItemDTO().blockFirst())));
 
-      var responseSpec = webTestClient.post()
-          .uri("/items/1")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
-          .exchange();
+      var responseSpec = generateAddRemoveSpec(action);
 
       switch (action) {
         case PLUS -> responseSpec.expectStatus().is2xxSuccessful();
@@ -118,10 +154,31 @@ class ItemsControllerTests {
       }
     }
 
+    @ParameterizedTest
+    @EnumSource(CartAction.class)
+    void shouldDenyAddRemoveItemToCartForUnauthorizedUser(CartAction action) {
+      generateAddRemoveSpec(action)
+          .expectStatus().is3xxRedirection();
+    }
+
+    private WebTestClient.ResponseSpec generateAddRemoveSpec(CartAction action) {
+      return webTestClient.mutateWith(csrf())
+          .post()
+          .uri("/items/1")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
+          .exchange();
+    }
+
   }
 
   @Test
+  @WithMockUser(username = "test-user", roles = "USER")
   void shouldGetImage() {
+    checkGetImage();
+  }
+
+  private void checkGetImage() {
     byte[] image = {108};
 
     when(itemsService.getItemImage(1)).thenReturn(Mono.just(image));

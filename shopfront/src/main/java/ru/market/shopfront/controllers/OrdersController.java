@@ -1,5 +1,8 @@
 package ru.market.shopfront.controllers;
 
+import java.security.Principal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,18 +25,19 @@ public class OrdersController {
   }
 
   @GetMapping
-  public Mono<Rendering> getOrders() {
+  public Mono<Rendering> getOrders(@AuthenticationPrincipal UserDetails userDetails) {
     return Mono.just(
         Rendering.view(ORDERS_VIEW)
-            .modelAttribute("orders", ordersService.getOrders())
+            .modelAttribute("orders", ordersService.getOrders(userDetails.getUsername()))
             .build()
     );
   }
 
   @GetMapping("/{id}")
-  public Mono<Rendering> getOrder(@PathVariable("id") Integer orderId,
+  public Mono<Rendering> getOrder(@AuthenticationPrincipal UserDetails userDetails,
+                                  @PathVariable("id") Integer orderId,
                                   @RequestParam(value = "newOrder", required = false) Boolean newOrder) {
-    return ordersService.getOrder(orderId)
+    return ordersService.getOrder(userDetails.getUsername(), orderId)
         .map(order ->
             Rendering.view("order")
                 .modelAttribute("order", order)

@@ -1,7 +1,9 @@
 package ru.market.shopfront.integration.controllers;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -10,8 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -38,8 +43,20 @@ class CartsControllerTests {
   private PaymentService paymentService;
 
   @Test
+  void shouldRedirectUnauthorizedUserToLoginPage() {
+    webTestClient.get()
+        .uri("/carts/items")
+        .header("Accept", "text/html")
+        .exchange()
+        .expectStatus().is3xxRedirection()
+        .expectHeader().value("Location", location ->
+            assertThat(location).contains("/login"));
+  }
+
+  @Test
+  @WithMockUser(username = "test-user")
   void shouldGetCartItems() {
-    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+    when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
     webTestClient.get()
@@ -55,8 +72,17 @@ class CartsControllerTests {
   }
 
   @Test
+  void shouldDenyGetCartItemsForUnauthorizedUser() {
+    webTestClient.get()
+        .uri("/cart/items")
+        .exchange()
+        .expectStatus().is3xxRedirection();
+  }
+
+  @Test
+  @WithMockUser(username = "test-user")
   void shouldNotContainBuyButtonOnEmptyBalance() {
-    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+    when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(0));
 
     webTestClient.get()
@@ -72,36 +98,50 @@ class CartsControllerTests {
   }
 
   @Test
+  @WithMockUser(username = "test-user")
   void shouldBuyCartItems() {
-    when(cartsService.buy(999))
+    var userId = "test-user";
+    when(cartsService.buy(userId))
         .thenReturn(Mono.just(
-                OrderDTO.from(new Order(1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
+                OrderDTO.from(new Order(userId, 1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
             )
         );
     var paymentResult = new PaymentResult();
     paymentResult.setStatus(PaymentResult.StatusEnum.SUCCESS);
     when(paymentService.chargePayment(any(UUID.class), any(UUID.class), any(Integer.class))).thenReturn(Mono.just(paymentResult));
 
-    webTestClient.post()
+    webTestClient.mutateWith(csrf())
+        .post()
         .uri("/cart/buy")
         .exchange()
         .expectStatus().is3xxRedirection();
   }
 
   @Test
+  void shouldDenyBuyCartItemsForUnauthorizedUser() {
+    webTestClient.mutateWith(csrf())
+        .post()
+        .uri("/cart/buy")
+        .exchange()
+        .expectStatus().is3xxRedirection();
+  }
+
+  @Test
+  @WithMockUser(username = "test-user")
   void shouldReturnPaymentErrorOnBuying() {
-    when(cartsService.buy(999))
+    when(cartsService.buy("test-user"))
         .thenReturn(Mono.just(
-                OrderDTO.from(new Order(1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
+                OrderDTO.from(new Order("test-user", 1111), Objects.requireNonNull(FixturesGenerator.generateOrderItems().collectList().block()))
             )
         );
     var paymentResult = new PaymentResult();
     paymentResult.setStatus(PaymentResult.StatusEnum.FAILED);
     when(paymentService.chargePayment(any(UUID.class), any(UUID.class), any(Integer.class))).thenReturn(Mono.just(paymentResult));
-    when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+    when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
     when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
-    webTestClient.post()
+    webTestClient.mutateWith(csrf())
+        .post()
         .uri("/cart/buy")
         .exchange()
         .expectStatus().is2xxSuccessful()
@@ -117,23 +157,35 @@ class CartsControllerTests {
 
     @ParameterizedTest
     @EnumSource(CartAction.class)
+    @WithMockUser(username = "test-user")
     void shouldAddRemoveItemToCart(CartAction action) {
-      when(cartsService.addRemoveToCart(999, 1, action)).thenReturn(Mono.empty());
-      when(cartsService.getCart(999)).thenReturn(FixturesGenerator.generateItemDTO());
+      when(cartsService.addRemoveToCart("test-user", 1, action)).thenReturn(Mono.empty());
+      when(cartsService.getCart("test-user")).thenReturn(FixturesGenerator.generateItemDTO());
       when(paymentService.getBalance(any(UUID.class))).thenReturn(Mono.just(15000));
 
-
-      webTestClient.post()
-          .uri("/cart/items")
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
-          .exchange()
+      generateAddRemoveSpec(action)
           .expectStatus().is2xxSuccessful()
           .expectHeader().contentTypeCompatibleWith(MediaType.TEXT_HTML)
           .expectBody(String.class)
           .value(html -> {
             assert html.contains("<button class=\"btn btn-warning ms-auto\">Купить</button>");
           });
+    }
+
+    @ParameterizedTest
+    @EnumSource(CartAction.class)
+    void shouldDenyAddRemoveItemToCart(CartAction action) {
+      generateAddRemoveSpec(action)
+          .expectStatus().is3xxRedirection();
+    }
+
+    private WebTestClient.ResponseSpec generateAddRemoveSpec(CartAction action) {
+      return webTestClient.mutateWith(csrf())
+          .post()
+          .uri("/cart/items")
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .body(BodyInserters.fromFormData(FixturesGenerator.generateAddRemoveToCartBody(action)))
+          .exchange();
     }
 
   }
