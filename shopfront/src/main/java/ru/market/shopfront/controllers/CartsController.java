@@ -2,8 +2,6 @@ package ru.market.shopfront.controllers;
 
 import java.util.UUID;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -16,10 +14,11 @@ import ru.market.shopfront.exceptions.PaymentException;
 import ru.market.shopfront.payment.domain.PaymentResult;
 import ru.market.shopfront.services.CartsService;
 import ru.market.shopfront.services.PaymentService;
+import ru.market.shopfront.utils.SecurityUtils;
 
 @Controller
 @RequestMapping("/cart")
-public class CartsController {
+public class CartsController extends BaseController {
 
   private static final String CART_VIEW = "cart";
 
@@ -33,35 +32,39 @@ public class CartsController {
   }
 
   @GetMapping("/items")
-  public Mono<Rendering> getCartItems(@AuthenticationPrincipal UserDetails userDetails) {
-    return getCartItemsView(userDetails.getUsername());
+  public Mono<Rendering> getCartItems() {
+    return executeWithUsername(this::getCartItemsView);
   }
 
   @PostMapping("/buy")
-  public Mono<Rendering> buy(@AuthenticationPrincipal UserDetails userDetails) {
-    return cartsService.buy(userDetails.getUsername())
-        .flatMap(
-            orderDTO -> {
-              // This is not optimal decision, not transaction fail safe!
-              return paymentService.chargePayment(UUID.randomUUID(), UUID.randomUUID(), orderDTO.totalSum())
-                  .flatMap(paymentResult -> {
-                        if (paymentResult.getStatus() != PaymentResult.StatusEnum.SUCCESS) {
-                          // TODO use multilanguage
-                          return Mono.error(new PaymentException("Ошибка оплаты, статус: " + paymentResult.getStatus()));
-                        }
+  public Mono<Rendering> buy() {
+    return executeWithUsername(username ->
+        cartsService.buy(username)
+            .flatMap(
+                orderDTO -> {
+                  // This is not optimal decision, not transaction fail safe!
+                  return paymentService.chargePayment(UUID.randomUUID(), UUID.randomUUID(), orderDTO.totalSum())
+                      .flatMap(paymentResult -> {
+                            if (paymentResult.getStatus() != PaymentResult.StatusEnum.SUCCESS) {
+                              // TODO use multilanguage
+                              return Mono.error(
+                                  new PaymentException("Ошибка оплаты, статус: " + paymentResult.getStatus()));
+                            }
 
-                        return Mono.just(Rendering.redirectTo("/orders/" + orderDTO.id() + "?newOrder=true").build());
-                      }
-                  )
-                  .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()))
-                  .onErrorResume(err -> getCartItemsView(userDetails.getUsername(), err.getMessage()));
-            });
+                            return Mono.just(Rendering.redirectTo("/orders/" + orderDTO.id() + "?newOrder=true").build());
+                          }
+                      )
+                      .switchIfEmpty(Mono.just(Rendering.redirectTo("/orders").build()))
+                      .onErrorResume(err -> getCartItemsView(username, err.getMessage()));
+                }));
   }
 
   @PostMapping(value = "/items", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  public Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute AddRemoveToCartRequest request) {
-    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
-        .then(getCartItemsView(userDetails.getUsername()));
+  public Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request) {
+    return executeWithUsername(username ->
+        cartsService.addRemoveToCart(username, request.itemId(), request.action())
+            .then(getCartItemsView(username))
+    );
   }
 
   private Mono<Rendering> getCartItemsView(final String userId) {
