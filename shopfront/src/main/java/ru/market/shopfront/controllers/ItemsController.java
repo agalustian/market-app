@@ -6,8 +6,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -29,10 +27,11 @@ import ru.market.shopfront.dto.Paging;
 import ru.market.shopfront.dto.SearchRequest;
 import ru.market.shopfront.services.CartsService;
 import ru.market.shopfront.services.ItemsService;
+import ru.market.shopfront.utils.SecurityUtils;
 
 @Controller
 @RequestMapping("/items")
-public class ItemsController {
+public class ItemsController extends BaseController {
   // TODO move to environment variables
   private static final Integer ITEMS_CHUNK_SIZE = 3;
 
@@ -51,13 +50,12 @@ public class ItemsController {
 
   @GetMapping("")
   Mono<Rendering> search(
-      @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
       @RequestParam(value = "sort", required = false, defaultValue = "NO") ItemsSort sort,
       @RequestParam(value = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
       @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize
   ) {
-    return searchFor(search, sort, PageRequest.of(pageNumber, pageSize), userDetails)
+    return executeWithUsername(username -> searchFor(search, sort, PageRequest.of(pageNumber, pageSize), username)
         .collectList()
         .flatMap(itemsDTO ->
             itemsService.searchCount(search).map(itemsTotalCount ->
@@ -66,43 +64,42 @@ public class ItemsController {
                     .modelAttribute("search", search)
                     .modelAttribute("sort", sort)
                     .modelAttribute("paging", new Paging(pageNumber, pageSize, itemsTotalCount))
-                    .modelAttribute("isAuthorized", !Objects.isNull(userDetails))
+                    .modelAttribute("isAuthorized", !Objects.isNull(username))
                     .build()
             )
-        );
+        ));
   }
 
-  private Flux<ItemDTO> searchFor(String search, ItemsSort sort, PageRequest pageRequest, UserDetails userDetails) {
-    if (userDetails == null) {
+  private Flux<ItemDTO> searchFor(String search, ItemsSort sort, PageRequest pageRequest, String username) {
+    if (username == null) {
       return itemsService.search(search, sort, pageRequest);
     }
 
-    return itemsService.searchForUser(search, sort, pageRequest, userDetails.getUsername());
+    return itemsService.searchForUser(search, sort, pageRequest, username);
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   @PreAuthorize("hasRoles('USER')")
-  Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
-                                  @ModelAttribute AddRemoveToCartRequest request,
+  Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request,
                                   @ModelAttribute SearchRequest searchRequest) {
-    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action()).then(
-        Mono.just(
-            Rendering
-                .redirectTo(
-                    String.format("/items?search=%s&sort=%s&pageNumber=%s&pageSize=%s", searchRequest.search(),
-                        searchRequest.sort(), searchRequest.pageNumber(),
-                        searchRequest.pageSize()))
-                .build()
-        )
-    );
+    return executeWithUsername(
+        username -> cartsService.addRemoveToCart(username, request.itemId(), request.action()).then(
+            Mono.just(
+                Rendering
+                    .redirectTo(
+                        String.format("/items?search=%s&sort=%s&pageNumber=%s&pageSize=%s", searchRequest.search(),
+                            searchRequest.sort(), searchRequest.pageNumber(),
+                            searchRequest.pageSize()))
+                    .build()
+            )
+        ));
   }
 
   @PostMapping(value = "/{itemId}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
   @PreAuthorize("hasRoles('USER')")
-  Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
-                                  @ModelAttribute AddRemoveToCartRequest request) {
-    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
-        .then(redirectAfterAddRemove(userDetails.getUsername(), request.itemId(), request.action()));
+  Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request) {
+    return executeWithUsername(username -> cartsService.addRemoveToCart(username, request.itemId(), request.action())
+        .then(redirectAfterAddRemove(username, request.itemId(), request.action())));
   }
 
   private Mono<Rendering> redirectAfterAddRemove(String userId, Integer itemId, CartAction action) {
@@ -117,23 +114,21 @@ public class ItemsController {
   }
 
   @GetMapping("/{itemId}")
-  Mono<Rendering> getItemById(
-      @AuthenticationPrincipal UserDetails userDetails,
-      @PathVariable("itemId") Integer itemId) {
-    return getItem(itemId, userDetails)
+  Mono<Rendering> getItemById(@PathVariable("itemId") Integer itemId) {
+    return executeWithUsername(username -> getItem(itemId, username)
         .map(itemDTO -> Rendering.view(ITEM_VIEW)
             .modelAttribute("item", itemDTO)
-            .modelAttribute("isAuthorized", !Objects.isNull(userDetails))
+            .modelAttribute("isAuthorized", !Objects.isNull(username))
             .build()
-        );
+        ));
   }
 
-  private Mono<ItemDTO> getItem(Integer itemId, UserDetails userDetails) {
-    if (userDetails == null) {
+  private Mono<ItemDTO> getItem(Integer itemId, String username) {
+    if (username == null) {
       return itemsService.getItemById(itemId);
     }
 
-    return itemsService.getItemByIdForUser(itemId, userDetails.getUsername());
+    return itemsService.getItemByIdForUser(itemId, username);
   }
 
   @PostMapping("/image/{itemId}")

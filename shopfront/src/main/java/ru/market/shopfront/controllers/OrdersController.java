@@ -1,8 +1,5 @@
 package ru.market.shopfront.controllers;
 
-import java.security.Principal;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +11,7 @@ import ru.market.shopfront.services.OrdersService;
 
 @Controller
 @RequestMapping("/orders")
-public class OrdersController {
+public class OrdersController extends BaseController {
 
   private static String ORDERS_VIEW = "orders";
 
@@ -25,19 +22,18 @@ public class OrdersController {
   }
 
   @GetMapping
-  public Mono<Rendering> getOrders(@AuthenticationPrincipal UserDetails userDetails) {
-    return Mono.just(
+  public Mono<Rendering> getOrders() {
+    return executeWithUsername(username -> Mono.just(
         Rendering.view(ORDERS_VIEW)
-            .modelAttribute("orders", ordersService.getOrders(userDetails.getUsername()))
+            .modelAttribute("orders", ordersService.getOrders(username))
             .build()
-    );
+    ));
   }
 
   @GetMapping("/{id}")
-  public Mono<Rendering> getOrder(@AuthenticationPrincipal UserDetails userDetails,
-                                  @PathVariable("id") Integer orderId,
+  public Mono<Rendering> getOrder(@PathVariable("id") Integer orderId,
                                   @RequestParam(value = "newOrder", required = false) Boolean newOrder) {
-    return ordersService.getOrder(userDetails.getUsername(), orderId)
+    return executeWithUsername(username -> ordersService.getOrder(username, orderId)
         .map(order ->
             Rendering.view("order")
                 .modelAttribute("order", order)
@@ -45,7 +41,8 @@ public class OrdersController {
                 .build()
 
         )
-        .switchIfEmpty(Mono.just(Rendering.redirectTo(ORDERS_VIEW).build()));
+        .switchIfEmpty(Mono.just(Rendering.redirectTo(ORDERS_VIEW).build()))
+    );
   }
 
 }
