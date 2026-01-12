@@ -1,6 +1,7 @@
 package ru.market.shopfront.services;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.dto.OrderDTO;
@@ -19,8 +20,10 @@ public class OrdersService {
     this.orderItemsRepository = orderItemsRepository;
   }
 
-  public Flux<OrderDTO> getOrders() {
-    return ordersRepository.findAll().flatMap(order ->
+  public Flux<OrderDTO> getOrders(final String userId) {
+    Assert.notNull(userId, "User id is required for getting orders");
+
+    return ordersRepository.findAllByUserId(userId).flatMap(order ->
         orderItemsRepository
             .findAllByOrderId(order.getId())
             .collectList()
@@ -28,8 +31,11 @@ public class OrdersService {
     );
   }
 
-  public Mono<OrderDTO> getOrder(final Integer id) {
-    return ordersRepository.findById(id).flatMap(order ->
+  public Mono<OrderDTO> getOrder(final String userId, final Integer id) {
+    Assert.notNull(userId, "User id is required for getting orders");
+    Assert.notNull(id, "Order id is required for getting orders");
+
+    return ordersRepository.findByUserIdAndId(userId, id).flatMap(order ->
         orderItemsRepository
             .findAllByOrderId(order.getId())
             .collectList()

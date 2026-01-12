@@ -17,7 +17,13 @@ java {
     }
 }
 
-sourceSets.main.java.srcDir "$projectDir/build/generated/src/main/java"
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', "$projectDir/build/generated/src/main/java"]
+        }
+    }
+}
 
 repositories {
     mavenCentral()
@@ -25,6 +31,8 @@ repositories {
 
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter-webflux"
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "jakarta.validation:jakarta.validation-api:3.1.1"
     implementation "io.swagger.core.v3:swagger-annotations:2.2.28"
     implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13"
@@ -32,6 +40,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-testcontainers"
     testImplementation "org.testcontainers:junit-jupiter"
     testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation 'org.springframework.security:spring-security-test'
     testImplementation "io.projectreactor:reactor-test"
 
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
@@ -68,17 +77,18 @@ tasks.register("generatePaymentServer", GenerateTask) {
     apiPackage.set("ru.market.payment.server.api")
     configOptions.set([
             hideGenerationTimestamp: "true",
-            requestMappingMode: "controller",
-            interfaceOnly: "false",
-            library: "spring-boot",
-            reactive: "true",
-            useSpringBoot3: "true",
-            useJakartaEe: "true",
-            useTags: "true",
-            dateLibrary: "java8",
-            openApiNullable: "false",
-            serializableModel: "true",
-            returnSuccessCode: "true"
+            requestMappingMode     : "controller",
+            interfaceOnly          : "true",
+            library                : "spring-boot",
+            reactive               : "true",
+            useSpringBoot3         : "true",
+            useJakartaEe           : "true",
+            useTags                : "true",
+            dateLibrary            : "java8",
+            openApiNullable        : "false",
+            serializableModel      : "true",
+            returnSuccessCode      : "true",
+            delegatePattern        : "true"
     ])
 }
 

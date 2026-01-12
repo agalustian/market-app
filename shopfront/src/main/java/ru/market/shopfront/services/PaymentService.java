@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.payment.client.api.DefaultApi;
-import ru.market.shopfront.payment.domain.AccountBalance;
 import ru.market.shopfront.payment.domain.PaymentRequest;
 import ru.market.shopfront.payment.domain.PaymentResult;
 
@@ -26,10 +25,17 @@ public class PaymentService {
     return paymentApiClient.executePayment(accountId, operationId, paymentRequest);
   }
 
+  // TODO use logger
   public Mono<Integer> getBalance(UUID accountId) {
     return paymentApiClient.getAccountBalance(accountId)
-        .map(AccountBalance::getAmount)
-        .onErrorReturn(BigDecimal.valueOf(0))
+        .map(amount -> {
+          System.out.println("Received amount balance: " + amount.getAmount());
+          return amount.getAmount();
+        })
+        .onErrorResume(err -> {
+          System.out.println("Received error: " + err.getMessage());
+          return Mono.just(BigDecimal.valueOf(0));
+        })
         .map(BigDecimal::intValue);
   }
 

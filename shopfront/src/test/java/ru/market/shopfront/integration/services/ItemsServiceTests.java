@@ -37,8 +37,8 @@ public class ItemsServiceTests {
   @BeforeEach
   void prepare() {
     var items = itemsRepository.saveAll(FixturesGenerator.generateItems()).collectList().block();
-    cartItemsRepository.save(new CartItem(1001, items.getFirst().getId(), 10)).block();
-    cartItemsRepository.save(new CartItem(1001, items.getLast().getId(), 1)).block();
+    cartItemsRepository.save(new CartItem("test-user", items.getFirst().getId(), 10)).block();
+    cartItemsRepository.save(new CartItem("test-user", items.getLast().getId(), 1)).block();
   }
 
 }

@@ -15,19 +15,23 @@ public class Order {
   @Column("total_sum")
   private Integer totalSum;
 
+  @Column("user_id")
+  private String userId;
+
   protected Order() {
   }
 
-  public Order(Integer totalSum) {
+  public Order(String userId, Integer totalSum) {
     this.totalSum = totalSum;
+    this.userId = userId;
   }
 
-  public static Order from(List<CartItem> cartItems) {
+  public static Order from(String userId, List<CartItem> cartItems) {
     Integer totalSum = cartItems.stream()
         .map(cartItem -> cartItem.getPrice() * cartItem.getCount())
         .reduce(0, Integer::sum);
 
-    return new Order(totalSum);
+    return new Order(userId, totalSum);
   }
 
   public Integer getId() {

@@ -10,8 +10,8 @@ public class CartItem {
   @Id
   private Integer id;
 
-  @Column("cart_id")
-  private Integer cartId;
+  @Column("user_id")
+  private String userId;
 
   @Column("item_id")
   private Integer itemId;
@@ -34,9 +34,9 @@ public class CartItem {
   protected CartItem() {
   }
 
-  public CartItem(Integer id, Integer cartId, Integer itemId, Integer count, String title, Integer price, String imgPath, String description) {
+  public CartItem(Integer id, String userId, Integer itemId, Integer count, String title, Integer price, String imgPath, String description) {
     this.id = id;
-    this.cartId = cartId;
+    this.userId = userId;
     this.itemId = itemId;
     this.price = price;
     this.count = count;
@@ -45,8 +45,8 @@ public class CartItem {
     this.description = description;
   }
 
-  public CartItem(Integer cartId, Integer itemId, Integer count) {
-    this.cartId = cartId;
+  public CartItem(String userId, Integer itemId, Integer count) {
+    this.userId = userId;
     this.itemId = itemId;
     this.count = count;
   }
@@ -58,8 +58,8 @@ public class CartItem {
     return itemId;
   }
 
-  public Integer getCartId() {
-    return cartId;
+  public String getUserId() {
+    return userId;
   }
 
   public Integer getCount() {

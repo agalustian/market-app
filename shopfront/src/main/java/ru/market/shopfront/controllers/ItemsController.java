@@ -1,9 +1,13 @@
 package ru.market.shopfront.controllers;
 
 import java.util.Base64;
+import java.util.Objects;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -14,9 +18,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.reactive.result.view.Rendering;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.market.shopfront.dto.AddRemoveToCartRequest;
 import ru.market.shopfront.dto.CartAction;
+import ru.market.shopfront.dto.ItemDTO;
 import ru.market.shopfront.dto.ItemsDTO;
 import ru.market.shopfront.dto.ItemsSort;
 import ru.market.shopfront.dto.Paging;
@@ -29,9 +35,6 @@ import ru.market.shopfront.services.ItemsService;
 public class ItemsController {
   // TODO move to environment variables
   private static final Integer ITEMS_CHUNK_SIZE = 3;
-
-  // TODO for test
-  private static final Integer CART_ID = 999;
 
   private static final String ITEMS_VIEW = "items";
 
@@ -48,12 +51,14 @@ public class ItemsController {
 
   @GetMapping("")
   Mono<Rendering> search(
+      @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(value = "search", required = false, defaultValue = "") String search,
       @RequestParam(value = "sort", required = false, defaultValue = "NO") ItemsSort sort,
-      @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+      @RequestParam(value = "pageNumber", required = false, defaultValue = "0") Integer pageNumber,
       @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize
   ) {
-    return itemsService.search(search, sort, PageRequest.of(pageNumber - 1, pageSize)).collectList()
+    return searchFor(search, sort, PageRequest.of(pageNumber, pageSize), userDetails)
+        .collectList()
         .flatMap(itemsDTO ->
             itemsService.searchCount(search).map(itemsTotalCount ->
                 Rendering.view(ITEMS_VIEW)
@@ -61,14 +66,26 @@ public class ItemsController {
                     .modelAttribute("search", search)
                     .modelAttribute("sort", sort)
                     .modelAttribute("paging", new Paging(pageNumber, pageSize, itemsTotalCount))
+                    .modelAttribute("isAuthorized", !Objects.isNull(userDetails))
                     .build()
             )
         );
   }
 
+  private Flux<ItemDTO> searchFor(String search, ItemsSort sort, PageRequest pageRequest, UserDetails userDetails) {
+    if (userDetails == null) {
+      return itemsService.search(search, sort, pageRequest);
+    }
+
+    return itemsService.searchForUser(search, sort, pageRequest, userDetails.getUsername());
+  }
+
   @PostMapping(consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request, @ModelAttribute SearchRequest searchRequest) {
-    return cartsService.addRemoveToCart(CART_ID, request.itemId(), request.action()).then(
+  @PreAuthorize("hasRoles('USER')")
+  Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
+                                  @ModelAttribute AddRemoveToCartRequest request,
+                                  @ModelAttribute SearchRequest searchRequest) {
+    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action()).then(
         Mono.just(
             Rendering
                 .redirectTo(
@@ -81,26 +98,42 @@ public class ItemsController {
   }
 
   @PostMapping(value = "/{itemId}", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-  Mono<Rendering> addRemoveToCart(@ModelAttribute AddRemoveToCartRequest request) {
-    return cartsService.addRemoveToCart(CART_ID, request.itemId(), request.action())
-        .then(redirectAfterAddRemove(request.itemId(), request.action()));
+  @PreAuthorize("hasRoles('USER')")
+  Mono<Rendering> addRemoveToCart(@AuthenticationPrincipal UserDetails userDetails,
+                                  @ModelAttribute AddRemoveToCartRequest request) {
+    return cartsService.addRemoveToCart(userDetails.getUsername(), request.itemId(), request.action())
+        .then(redirectAfterAddRemove(userDetails.getUsername(), request.itemId(), request.action()));
   }
 
-  private Mono<Rendering> redirectAfterAddRemove(Integer itemId, CartAction action) {
+  private Mono<Rendering> redirectAfterAddRemove(String userId, Integer itemId, CartAction action) {
     if (action == CartAction.DELETE) {
       return Mono.just(Rendering.redirectTo(ITEMS_VIEW).build());
     }
 
-    return itemsService.getItemById(itemId)
+    return itemsService.getItemByIdForUser(itemId, userId)
         .map(itemDTO -> {
           return Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build();
         });
   }
 
   @GetMapping("/{itemId}")
-  Mono<Rendering> getItemById(@PathVariable("itemId") Integer itemId) {
-    return itemsService.getItemById(itemId)
-        .map(itemDTO -> Rendering.view(ITEM_VIEW).modelAttribute("item", itemDTO).build());
+  Mono<Rendering> getItemById(
+      @AuthenticationPrincipal UserDetails userDetails,
+      @PathVariable("itemId") Integer itemId) {
+    return getItem(itemId, userDetails)
+        .map(itemDTO -> Rendering.view(ITEM_VIEW)
+            .modelAttribute("item", itemDTO)
+            .modelAttribute("isAuthorized", !Objects.isNull(userDetails))
+            .build()
+        );
+  }
+
+  private Mono<ItemDTO> getItem(Integer itemId, UserDetails userDetails) {
+    if (userDetails == null) {
+      return itemsService.getItemById(itemId);
+    }
+
+    return itemsService.getItemByIdForUser(itemId, userDetails.getUsername());
   }
 
   @PostMapping("/image/{itemId}")
